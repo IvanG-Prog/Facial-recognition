@@ -13,13 +13,20 @@ model = InceptionResnetV1(pretrained='casia-webface').eval().to(device)  # load 
 mtcnn = MTCNN(keep_all=True, margin=20, min_face_size=20, device=device)  # load mtcnn for face detection,
 
 
+#base_path = "/home/ivang/Ivan/Python/pytorch/facenet/resgister_faces"  # database path
+
+#check that register_faces exists
+if not os.path.exists('register_faces'):
+    print("The register_faces folder does not exist. Please run the registers.py script first.")
+    exit(1)
+# Absolute path of the current file
+current_file_path = os.path.abspath(__file__)
+# Go up three directories: facial_recognition → src → project root
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
+# Path to the new folder at the project root level
+base_path = os.path.join(project_root, 'register_faces')
 
 
-
-
-
-
-base_path = "/home/ivang/Ivan/Python/pytorch/facenet/resgister_faces"  # database path
 wait_time= 300
 
 for attempt in range(3):
@@ -54,7 +61,7 @@ if registered_boxes is None:   # check if any faces were detected
 registered_embedding = model(registered_boxes).detach().cpu().numpy() #passes the face images through the FaceNet model to obtain a feature vector
 
 
-def take_photo_and_show():  #funtion to take a photo
+def take_photo_and_show():  #function to take a photo
     cap = cv2.VideoCapture(0)  # open the default camare (0 is the index)
     if not cap.isOpened():
         print("HE CAMARE COULD NOT BE OPEN.")
@@ -83,7 +90,7 @@ def take_photo_and_show():  #funtion to take a photo
     cv2.destroyAllWindows()  # closed opencv window
 
 
-take_photo_and_show()   # funtion call
+take_photo_and_show()   # function call
 
 new_image = Image.open(os.path.join(user_dir, 'login_face.jpg'))  # open the new image
 
@@ -96,11 +103,11 @@ if new_boxes is None:   # check if any faces were detected
 new_embedding = model(new_boxes).detach().cpu().numpy()  #passes the face images through the FaceNet model to obtain a feature vector
 
 
-def compare_embeddings(embedding1, embedding2):  # funtion to compare embeddings using the euclidean distance
+def compare_embeddings(embedding1, embedding2):  # function to compare embeddings using the euclidean distance
     distance = np.linalg.norm(embedding1 - embedding2)
     return distance
 
-distance = compare_embeddings(registered_embedding[0], new_embedding[0])  # funtion call
+distance = compare_embeddings(registered_embedding[0], new_embedding[0])  # function call
 
 threshold = 0.6  # adjust if necessary
 

@@ -5,6 +5,8 @@ import cv2
 import os
 import re
 
+
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # configuration
 
 model = InceptionResnetV1(pretrained='casia-webface').eval().to(device)  # load facenet model
@@ -19,7 +21,7 @@ def valid_ID(input_data):
     return input_data.isdigit()
 
 def valid_username(input_data):
-     return bool(re.search("[A-Za-z !@#$%^&*()_+]+", input_data)) and bool(re.search("[0-9]", input_data))
+    return bool(re.search("[A-Za-z !@#$%^&*()_+]+", input_data)) and bool(re.search("[0-9]", input_data))
 
 def register():
 
@@ -47,8 +49,21 @@ def register():
 
 first_names, last_name, identity_card, username= register()
 
+# Absolute path of the current file
+current_file_path = os.path.abspath(__file__)
 
-base_path = "/home/ivang/Ivan/Python/pytorch/facenet/resgister_faces"  # defines the base rout
+# Go up three directories: facial_recognition → src → project root
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
+
+# Path to the new folder at the project root level
+base_path = os.path.join(project_root, 'register_faces')
+
+# Create the folder if it doesn't exist
+os.makedirs(base_path, exist_ok=True)
+
+if not os.path.exists(base_path):  # check if the folder exists
+    os.makedirs(base_path)  # create the folder if it doesn't exist
+
 user_dir = os.path.join(base_path, username)  # concatenates the path and the username
 
 while os.path.exists(user_dir):  # check if the name exists
@@ -59,7 +74,7 @@ while os.path.exists(user_dir):  # check if the name exists
 os.makedirs(user_dir, exist_ok=True)  # Create a folder
 
 
-def take_photo_and_show():  # funtion to take a photo
+def take_photo_and_show():  # function to take a photo
     cap = cv2.VideoCapture(0)  # open the default camare (0 is the index)
 
     if not cap.isOpened():  # check if the camere has opened
@@ -88,7 +103,7 @@ def take_photo_and_show():  # funtion to take a photo
     cap.release()  # closed the camare
     cv2.destroyAllWindows()  # closed opencv window
 
-take_photo_and_show()  # funtion call
+take_photo_and_show()  # function call
 
 
 image_path = os.path.join(user_dir, 'registered_face.jpg')  # path
