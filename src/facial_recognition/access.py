@@ -7,7 +7,7 @@ import numpy as np
 import time
 
 def main():
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # configuration
+    device = torch.device('cpu')  # configuration
 
     model = InceptionResnetV1(pretrained='casia-webface').eval().to(device)  # load facenet model
 
@@ -63,36 +63,9 @@ def main():
     registered_embedding = model(registered_boxes).detach().cpu().numpy() #passes the face images through the FaceNet model to obtain a feature vector
 
 
-    def take_photo_and_show():  #function to take a photo
-        cap = cv2.VideoCapture(0)  # open the default camare (0 is the index)
-        if not cap.isOpened():
-            print("HE CAMARE COULD NOT BE OPEN.")
-            return None
-
-        while True:  # Loop for Video Capture
-            ret, frame = cap.read()  # ?????
-            if not ret:
-                print("HE PHOTO COULD NOT BE TAKEN.")
-                break
-
-            cv2.imshow('Press "s" to take the photo or "q" to exit', frame)
-
-            # wait for the user to press 's' or 'q'
-            key = cv2.waitKey(1)
-            if key == ord('s'):
-                new_image_path = os.path.join(user_dir, 'login_face.jpg')  # path for the image
-                cv2.imwrite(new_image_path, frame)  # load image in the path
-                print("Photo saved as:", new_image_path)
-                break
-            elif key == ord('q'):
-                print("Departure canceled.")
-                break
-
-        cap.release()
-        cv2.destroyAllWindows()  # closed opencv window
 
 
-    take_photo_and_show()   # function call
+    take_photo_and_show(user_dir)   # function call
 
     new_image = Image.open(os.path.join(user_dir, 'login_face.jpg'))  # open the new image
 
@@ -117,6 +90,35 @@ def main():
         print("Access granted.")
     else:
         print("Access denied. The images do not mach.")
+
+
+def take_photo_and_show(user_dir):  #function to take a photo
+        cap = cv2.VideoCapture(0)  # open the default camera (0 is the index)
+        if not cap.isOpened():
+            print("THE CAMERA COULD NOT BE OPEN.")
+            return None
+
+        while True:  # Loop for Video Capture
+            ret, frame = cap.read()  # ?????
+            if not ret:
+                print("THE PHOTO COULD NOT BE TAKEN.")
+                break
+
+            cv2.imshow('Press "s" to take the photo or "q" to exit', frame)
+
+            # wait for the user to press 's' or 'q'
+            key = cv2.waitKey(1)
+            if key == ord('s'):
+                new_image_path = os.path.join(user_dir, 'login_face.jpg')  # path for the image
+                cv2.imwrite(new_image_path, frame)  # load image in the path
+                print("Photo saved as:", new_image_path)
+                break
+            elif key == ord('q'):
+                print("Departure canceled.")
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()  # closed opencv window
 
 if __name__ == "__main__":
     main()
