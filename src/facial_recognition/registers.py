@@ -54,26 +54,23 @@ def register(first_names, last_name, identity_card, username, base_path):
         # Create the folder if it doesn't exist
         os.makedirs(user_dir, exist_ok=True)
 
-        # NO LLAMES a take_photo_and_show
-        # foto_path = take_photo_and_show(user_dir)
-
-        # Usa la imagen que ya guardaste en el backend:
+        # Use the image saved in the backend
         foto_temp = os.path.join(base_path, f"{username}_{identity_card}.png")
         foto_path = os.path.join(user_dir, 'registered_face.jpg')
 
         if not os.path.exists(foto_temp):
-            return False, "No se encontró la foto enviada."
+            return False, "The submitted photo was not found."
 
-        # Mueve la imagen a la carpeta del usuario
+        # Move the image to the user folder
         shutil.move(foto_temp, foto_path)
 
-        # Procesar foto y obtener embedding
+        # Process the photo and obtain embeddings
         try:
             embeddings = process_image(foto_path)
         except RuntimeError as e:
             return False, str(e)
 
-        # save data
+        # Save data
         data_file_path = os.path.join(user_dir, 'user_data.txt')  # created a text file to save the data
         with open(data_file_path, 'w') as data_file:
             data_file.write("Name: " + first_names + "\n")
@@ -125,36 +122,3 @@ def process_image(image_path):
 
 
 
-#if __name__ == "__main__":
-   #main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#if not os.path.exists(base_path):  # check if the folder exists
-        #os.makedirs(base_path)  # create the folder if it doesn't exist
-#user_dir = os.path.join(base_path, username)  # concatenates the path and the username
-
-
-'''while os.path.exists(user_dir):  # check if the name exists
-        print('Username not available', username, 'please choose another')
-        username= input('Choose a username: ')
-        user_dir = os.path.join(base_path, username)
-
-        os.makedirs(user_dir, exist_ok=True)  # Create a folder
-image_path = os.path.join(user_dir, 'registered_face.jpg')  # path
-
-
-    #take_photo_and_show(user_dir)  # function call'''

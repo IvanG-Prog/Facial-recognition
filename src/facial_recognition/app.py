@@ -96,419 +96,418 @@ def index():
 </html>
     '''
 
-@app.route('/register')
+@app.route('/register', methods=['GET', 'POST'])
 def register_page():
-    return '''
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8" />
-<title>User registration - Cybersecurity Facial</title>
-<style>
-    body {
-        background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
-        min-height: 100vh;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Segoe UI', Arial, sans-serif;
-    }
-    .registro-container {
-        background: rgba(20, 30, 48, 0.95);
-        border-radius: 18px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        padding: 40px 32px 32px 32px;
-        width: 350px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        border: 1.5px solid #00ffe7;
-    }
-    .registro-container h2 {
-        color: #00ffe7;
-        margin-bottom: 18px;
-        letter-spacing: 1px;
-        text-shadow: 0 0 8px #00ffe7aa;
-    }
-    .registro-container input {
-        width: 100%;
-        padding: 12px;
-        margin: 10px 0;
-        border: none;
-        border-radius: 8px;
-        background: #232b3a;
-        color: #00ffe7;
-        font-size: 1em;
-        outline: none;
-        box-shadow: 0 0 0 1.5px #00ffe733;
-        transition: box-shadow 0.2s;
-    }
-    .registro-container input:focus {
-        box-shadow: 0 0 0 2.5px #00ffe7;
-    }
-    .registro-container button {
-        width: 100%;
-        padding: 14px;
-        margin-top: 16px;
-        border: none;
-        border-radius: 8px;
-        background: linear-gradient(90deg, #00ffe7 0%, #007cf0 100%);
-        color: #181f2a;
-        font-size: 1.1em;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 2px 8px #00ffe744;
-        letter-spacing: 1px;
-        transition: background 0.2s, color 0.2s;
-    }
-    .registro-container button:hover {
-        background: linear-gradient(90deg, #007cf0 0%, #00ffe7 100%);
-        color: #fff;
-    }
-    #video {
-        margin-top: 18px;
-        border-radius: 10px;
-        box-shadow: 0 4px 16px #00ffe755;
-        border: 2px solid #00ffe7;
-        display: none;
-    }
-    #msg {
-        color: #00ffe7;
-        margin-top: 10px;
-        font-size: 1em;
-        text-shadow: 0 0 6px #00ffe7aa;
-    }
-</style>
-</head>
-<body>
-    <div class="registro-container">
-        <h2>Safe Registration</h2>
-        <form id="registroForm" autocomplete="off">
-            <input name="name" placeholder="Name" required>
-            <input name="lastname" placeholder="Last Name" required>
-            <input name="id" placeholder="ID" required>
-            <input name="username" placeholder="Username" required>
-            <button type="button" onclick="startCamera()">Activate camera</button>
-        </form>
-        <video id="video" width="320" height="240" autoplay></video>
-        <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-        <p id="msg"></p>
-    </div>
-<script>
-let streamActivo = false;
-function startCamera() {
-    const video = document.getElementById('video');
-    video.style.display = 'block';
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(function(stream) {
-        video.srcObject = stream;
-        streamActivo = true;
-        document.getElementById('msg').innerText = "Press S to take the photo and register.";
-      })
-      .catch(function(err) {
-        alert('The camera could not be accessed: ' + err);
-      });
-}
-
-document.addEventListener('keydown', function(event) {
-    if (event.key === 's' || event.key === 'S') {
-        if (streamActivo) {
-            takePhotoAndRecord();
+    if request.method == 'GET':
+        return '''
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+        <meta charset="UTF-8" />
+        <title>User registration - Cybersecurity Facial</title>
+        <style>
+            body {
+                background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+                min-height: 100vh;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'Segoe UI', Arial, sans-serif;
+            }
+            .registro-container {
+                background: rgba(20, 30, 48, 0.95);
+                border-radius: 18px;
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+                padding: 40px 32px 32px 32px;
+                width: 350px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                border: 1.5px solid #00ffe7;
+            }
+            .registro-container h2 {
+                color: #00ffe7;
+                margin-bottom: 18px;
+                letter-spacing: 1px;
+                text-shadow: 0 0 8px #00ffe7aa;
+            }
+            .registro-container input {
+                width: 100%;
+                padding: 12px;
+                margin: 10px 0;
+                border: none;
+                border-radius: 8px;
+                background: #232b3a;
+                color: #00ffe7;
+                font-size: 1em;
+                outline: none;
+                box-shadow: 0 0 0 1.5px #00ffe733;
+                transition: box-shadow 0.2s;
+            }
+            .registro-container input:focus {
+                box-shadow: 0 0 0 2.5px #00ffe7;
+            }
+            .registro-container button {
+                width: 100%;
+                padding: 14px;
+                margin-top: 16px;
+                border: none;
+                border-radius: 8px;
+                background: linear-gradient(90deg, #00ffe7 0%, #007cf0 100%);
+                color: #181f2a;
+                font-size: 1.1em;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 2px 8px #00ffe744;
+                letter-spacing: 1px;
+                transition: background 0.2s, color 0.2s;
+            }
+            .registro-container button:hover {
+                background: linear-gradient(90deg, #007cf0 0%, #00ffe7 100%);
+                color: #fff;
+            }
+            #video {
+                margin-top: 18px;
+                border-radius: 10px;
+                box-shadow: 0 4px 16px #00ffe755;
+                border: 2px solid #00ffe7;
+                display: none;
+            }
+            #msg {
+                color: #00ffe7;
+                margin-top: 10px;
+                font-size: 1em;
+                text-shadow: 0 0 6px #00ffe7aa;
+            }
+        </style>
+        </head>
+        <body>
+            <div class="registro-container">
+                <h2>Safe Registration</h2>
+                <form id="registroForm" autocomplete="off">
+                    <input name="name" placeholder="Name" required>
+                    <input name="lastname" placeholder="Last Name" required>
+                    <input name="id" placeholder="ID" required>
+                    <input name="username" placeholder="Username" required>
+                    <button type="button" onclick="startCamera()">Activate camera</button>
+                </form>
+                <video id="video" width="320" height="240" autoplay></video>
+                <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+                <p id="msg"></p>
+            </div>
+        <script>
+        let streamActivo = false;
+        function startCamera() {
+            const video = document.getElementById('video');
+            video.style.display = 'block';
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                video.srcObject = stream;
+                streamActivo = true;
+                document.getElementById('msg').innerText = "Press S to take the photo and register.";
+            })
+            .catch(function(err) {
+                alert('The camera could not be accessed: ' + err);
+            });
         }
-    }
-});
 
-function takePhotoAndRecord() {
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imagenBase64 = canvas.toDataURL('image/png');
-    register(imagenBase64);
-}
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 's' || event.key === 'S') {
+                if (streamActivo) {
+                    takePhotoAndRecord();
+                }
+            }
+        });
 
-function register(imagenBase64) {
-    const form = document.getElementById('registroForm');
-    if (!form.name.value || !form.lastname.value || !form.id.value || !form.username.value) {
-        alert('Please fill in all fields before taking the photo.');
-        return;
-    }
-    const datos = {
-        name: form.name.value,
-        "last name": form.lastname.value,
-        id: form.id.value,
-        username: form.username.value,
-        image: imagenBase64
-    };
-    fetch('/register', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(datos)
-    }).then(response => response.json())
-    .then(data => {
-        alert(data.message);
-        if (data.status === "ok") {
-            window.location.href = "/";
+        function takePhotoAndRecord() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imagenBase64 = canvas.toDataURL('image/png');
+            register(imagenBase64);
         }
-    })
-    .catch(err => alert('Error: ' + err));
-}
-</script>
-</body>
-</html>
+
+        function register(imagenBase64) {
+            const form = document.getElementById('registroForm');
+            if (!form.name.value || !form.lastname.value || !form.id.value || !form.username.value) {
+                alert('Please fill in all fields before taking the photo.');
+                return;
+            }
+            const datos = {
+                name: form.name.value,
+                "last name": form.lastname.value,
+                id: form.id.value,
+                username: form.username.value,
+                image: imagenBase64
+            };
+            fetch('/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(datos)
+            }).then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.status === "ok") {
+                    window.location.href = "/";
+                }
+            })
+            .catch(err => alert('Error: ' + err));
+        }
+        </script>
+        </body>
+        </html>
     '''
+    elif request.method == 'POST':
 
-# Endpoint para procesar registro
-@app.route('/register', methods=['POST'])
-def register():
-    datos = request.get_json()
-    name = datos.get('name')
-    lastname = datos.get('last name')
-    id_card = datos.get('id')
-    username = datos.get('username')
-    image = datos.get('image')
+        datos = request.get_json()
+        name = datos.get('name')
+        lastname = datos.get('last name')
+        id_card = datos.get('id')
+        username = datos.get('username')
+        image = datos.get('image')
 
-    #Data validation
-    required = [name, lastname, id_card, username, image]
-    if not all(required):
-        return jsonify({"status": "error", "message": "Missing data in the form"}), 400
+        #Data validation
+        required = [name, lastname, id_card, username, image]
+        if not all(required):
+            return jsonify({"status": "error", "message": "Missing data in the form"}), 400
 
-    # Temporarily save the image in base_path
-    try:
-        header, encoded = image.split(",", 1)
-        img_bytes = base64.b64decode(encoded)
-        os.makedirs(registers.base_path, exist_ok=True)
-        temp_img_path = os.path.join(registers.base_path, f"{username}_{id_card}.png")
-        with open(temp_img_path, "wb") as f:
-            f.write(img_bytes)
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Error saving image: {str(e)}"}), 400
+        # Temporarily save the image in base_path
+        try:
+            header, encoded = image.split(",", 1)
+            img_bytes = base64.b64decode(encoded)
+            os.makedirs(registers.base_path, exist_ok=True)
+            temp_img_path = os.path.join(registers.base_path, f"{username}_{id_card}.png")
+            with open(temp_img_path, "wb") as f:
+                f.write(img_bytes)
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Error saving image: {str(e)}"}), 400
 
-    # Call your logging function ONLY with the arguments it expects
-    try:
-        success, message = registers.register(name, lastname, id_card, username, registers.base_path)
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Error in registration: {str(e)}"}), 400
+        # Call your logging function ONLY with the arguments it expects
+        try:
+            success, message = registers.register(name, lastname, id_card, username, registers.base_path)
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Error in registration: {str(e)}"}), 400
 
-    return jsonify({"status": "ok" if success else "error", "message": message}), 200 if success else 400
+        return jsonify({"status": "ok" if success else "error", "message": message}), 200 if success else 400
 
 
-@app.route('/access')
+@app.route('/access', methods=['GET', 'POST'])
 def access_page():
-    return '''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>User Access - Cybersecurity Facial</title>
-<style>
-    body {
-        background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
-        min-height: 100vh;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Segoe UI', Arial, sans-serif;
-    }
-    .access-container {
-        background: rgba(20, 30, 48, 0.95);
-        border-radius: 18px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        padding: 40px 32px 32px 32px;
-        width: 350px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        border: 1.5px solid #00ffe7;
-    }
-    .access-container h2 {
-        color: #00ffe7;
-        margin-bottom: 18px;
-        letter-spacing: 1px;
-        text-shadow: 0 0 8px #00ffe7aa;
-    }
-    .access-container input {
-        width: 100%;
-        padding: 12px;
-        margin: 10px 0;
-        border: none;
-        border-radius: 8px;
-        background: #232b3a;
-        color: #00ffe7;
-        font-size: 1em;
-        outline: none;
-        box-shadow: 0 0 0 1.5px #00ffe733;
-        transition: box-shadow 0.2s;
-    }
-    .access-container input:focus {
-        box-shadow: 0 0 0 2.5px #00ffe7;
-    }
-    .access-container button {
-        width: 100%;
-        padding: 14px;
-        margin-top: 16px;
-        border: none;
-        border-radius: 8px;
-        background: linear-gradient(90deg, #00ffe7 0%, #007cf0 100%);
-        color: #181f2a;
-        font-size: 1.1em;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 2px 8px #00ffe744;
-        letter-spacing: 1px;
-        transition: background 0.2s, color 0.2s;
-    }
-    .access-container button:hover {
-        background: linear-gradient(90deg, #007cf0 0%, #00ffe7 100%);
-        color: #fff;
-    }
-    #video {
-        margin-top: 18px;
-        border-radius: 10px;
-        box-shadow: 0 4px 16px #00ffe755;
-        border: 2px solid #00ffe7;
-        display: none;
-    }
-    #msg {
-        color: #00ffe7;
-        margin-top: 10px;
-        font-size: 1em;
-        text-shadow: 0 0 6px #00ffe7aa;
-    }
-</style>
-</head>
-<body>
-    <div class="access-container">
-        <h2>Secure Access</h2>
-        <form id="accessForm" autocomplete="off">
-            <input name="username" placeholder="Username" required>
-            <button type="button" onclick="startCamera()">Activate camera</button>
-        </form>
-        <video id="video" width="320" height="240" autoplay></video>
-        <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-        <p id="msg"></p>
-    </div>
-<script>
-let streamActive = false;
-function startCamera() {
-    const video = document.getElementById('video');
-    video.style.display = 'block';
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(function(stream) {
-        video.srcObject = stream;
-        streamActive = true;
-        document.getElementById('msg').innerText = "Press S to take the photo and access.";
-      })
-      .catch(function(err) {
-        alert('The camera could not be accessed: ' + err);
-      });
-}
-
-document.addEventListener('keydown', function(event) {
-    if (event.key === 's' || event.key === 'S') {
-        if (streamActive) {
-            takePhotoAndAccess();
+    if request.method == 'GET':
+        return '''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8" />
+        <title>User Access - Cybersecurity Facial</title>
+        <style>
+            body {
+                background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+                min-height: 100vh;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'Segoe UI', Arial, sans-serif;
+            }
+            .access-container {
+                background: rgba(20, 30, 48, 0.95);
+                border-radius: 18px;
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+                padding: 40px 32px 32px 32px;
+                width: 350px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                border: 1.5px solid #00ffe7;
+            }
+            .access-container h2 {
+                color: #00ffe7;
+                margin-bottom: 18px;
+                letter-spacing: 1px;
+                text-shadow: 0 0 8px #00ffe7aa;
+            }
+            .access-container input {
+                width: 100%;
+                padding: 12px;
+                margin: 10px 0;
+                border: none;
+                border-radius: 8px;
+                background: #232b3a;
+                color: #00ffe7;
+                font-size: 1em;
+                outline: none;
+                box-shadow: 0 0 0 1.5px #00ffe733;
+                transition: box-shadow 0.2s;
+            }
+            .access-container input:focus {
+                box-shadow: 0 0 0 2.5px #00ffe7;
+            }
+            .access-container button {
+                width: 100%;
+                padding: 14px;
+                margin-top: 16px;
+                border: none;
+                border-radius: 8px;
+                background: linear-gradient(90deg, #00ffe7 0%, #007cf0 100%);
+                color: #181f2a;
+                font-size: 1.1em;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 2px 8px #00ffe744;
+                letter-spacing: 1px;
+                transition: background 0.2s, color 0.2s;
+            }
+            .access-container button:hover {
+                background: linear-gradient(90deg, #007cf0 0%, #00ffe7 100%);
+                color: #fff;
+            }
+            #video {
+                margin-top: 18px;
+                border-radius: 10px;
+                box-shadow: 0 4px 16px #00ffe755;
+                border: 2px solid #00ffe7;
+                display: none;
+            }
+            #msg {
+                color: #00ffe7;
+                margin-top: 10px;
+                font-size: 1em;
+                text-shadow: 0 0 6px #00ffe7aa;
+            }
+        </style>
+        </head>
+        <body>
+            <div class="access-container">
+                <h2>Secure Access</h2>
+                <form id="accessForm" autocomplete="off">
+                    <input name="username" placeholder="Username" required>
+                    <button type="button" onclick="startCamera()">Activate camera</button>
+                </form>
+                <video id="video" width="320" height="240" autoplay></video>
+                <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+                <p id="msg"></p>
+            </div>
+        <script>
+        let streamActive = false;
+        function startCamera() {
+            const video = document.getElementById('video');
+            video.style.display = 'block';
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                video.srcObject = stream;
+                streamActive = true;
+                document.getElementById('msg').innerText = "Press S to take the photo and access.";
+            })
+            .catch(function(err) {
+                alert('The camera could not be accessed: ' + err);
+            });
         }
-    }
-});
 
-function takePhotoAndAccess() {
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageBase64 = canvas.toDataURL('image/png');
-    access(imageBase64);
-}
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 's' || event.key === 'S') {
+                if (streamActive) {
+                    takePhotoAndAccess();
+                }
+            }
+        });
 
-function access(imageBase64) {
-    const form = document.getElementById('accessForm');
-    if (!form.username.value) {
-        alert('Please enter your username before taking the photo.');
-        return;
-    }
-    const data = {
-        username: form.username.value,
-        image: imageBase64
-    };
-    fetch('/access', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    }).then(response => response.json())
-    .then(data => {
-        alert(data.message);
-        if (data.status === "ok") {
-            window.location.href = "/documents";
+        function takePhotoAndAccess() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageBase64 = canvas.toDataURL('image/png');
+            access(imageBase64);
         }
-    })
-    .catch(err => alert('Error: ' + err));
-}
-</script>
-</body>
-</html>
-    '''
 
-# Endpoint para procesar acceso
-@app.route('/access', methods=['POST'])
-def access_user():
-    data = request.get_json()
-    username = data.get('username')
-    image_b64 = data.get('image')
+        function access(imageBase64) {
+            const form = document.getElementById('accessForm');
+            if (!form.username.value) {
+                alert('Please enter your username before taking the photo.');
+                return;
+            }
+            const data = {
+                username: form.username.value,
+                image: imageBase64
+            };
+            fetch('/access', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.status === "ok") {
+                    window.location.href = "/documents";
+                }
+            })
+            .catch(err => alert('Error: ' + err));
+        }
+        </script>
+        </body>
+        </html>
+            '''
 
-    # Paths
-    user_dir = os.path.join(registers.base_path, username)
-    registered_img_path = os.path.join(user_dir, 'registered_face.jpg')
-    login_img_path = os.path.join(user_dir, 'login_face.jpg')
+    elif request.method == 'POST':
 
-    # Validations
-    if not os.path.exists(user_dir):
-        return jsonify({"status": "error", "message": "User not registered."}), 400
-    if not os.path.exists(registered_img_path):
-        return jsonify({"status": "error", "message": "No registered image found."}), 400
+        data = request.get_json()
+        username = data.get('username')
+        image_b64 = data.get('image')
 
-    # Save the received image as login_face.jpg
-    try:
-        header, encoded = image_b64.split(",", 1)
-        img_bytes = base64.b64decode(encoded)
-        with open(login_img_path, "wb") as f:
-            f.write(img_bytes)
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Error saving login image: {str(e)}"}), 400
+        # Paths
+        user_dir = os.path.join(registers.base_path, username)
+        registered_img_path = os.path.join(user_dir, 'registered_face.jpg')
+        login_img_path = os.path.join(user_dir, 'login_face.jpg')
 
-    # Load models (reuse your registers.py logic)
-    device = registers.device
-    model = registers.model
-    mtcnn = registers.mtcnn
+        # Validations
+        if not os.path.exists(user_dir):
+            return jsonify({"status": "error", "message": "User not registered."}), 400
+        if not os.path.exists(registered_img_path):
+            return jsonify({"status": "error", "message": "No registered image found."}), 400
 
-    # Helper to get embedding
-    def get_embedding(img_path):
-        image = Image.open(img_path)
-        if image.mode == 'RGBA':
-            image = image.convert('RGB')
-        boxes = mtcnn(image)
-        if boxes is None:
-            raise RuntimeError("No face detected.")
-        embedding = model(boxes).detach().cpu().numpy()
-        return embedding[0]
+        # Save the received image as login_face.jpg
+        try:
+            header, encoded = image_b64.split(",", 1)
+            img_bytes = base64.b64decode(encoded)
+            with open(login_img_path, "wb") as f:
+                f.write(img_bytes)
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Error saving login image: {str(e)}"}), 400
 
-    # Get embeddings
-    try:
-        registered_embedding = get_embedding(registered_img_path)
-        login_embedding = get_embedding(login_img_path)
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
+        # Load models (reuse your registers.py logic)
+        device = registers.device
+        model = registers.model
+        mtcnn = registers.mtcnn
 
-    # Compare embeddings
-    distance = np.linalg.norm(registered_embedding - login_embedding)
-    threshold = 0.6  # Adjust as needed
+        # Helper to get embedding
+        def get_embedding(img_path):
+            image = Image.open(img_path)
+            if image.mode == 'RGBA':
+                image = image.convert('RGB')
+            boxes = mtcnn(image)
+            if boxes is None:
+                raise RuntimeError("No face detected.")
+            embedding = model(boxes).detach().cpu().numpy()
+            return embedding[0]
 
-    if distance < threshold:
-        return jsonify({"status": "ok", "message": "Access granted."}), 200
-    else:
-        return jsonify({"status": "error", "message": "Access denied. Face does not match."}), 401
+        # Get embeddings
+        try:
+            registered_embedding = get_embedding(registered_img_path)
+            login_embedding = get_embedding(login_img_path)
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+        # Compare embeddings
+        distance = np.linalg.norm(registered_embedding - login_embedding)
+        threshold = 0.6  # Adjust as needed
+
+        if distance < threshold:
+            return jsonify({"status": "ok", "message": "Access granted."}), 200
+        else:
+            return jsonify({"status": "error", "message": "Access denied. Face does not match."}), 401
 
 
 @app.route('/documents')

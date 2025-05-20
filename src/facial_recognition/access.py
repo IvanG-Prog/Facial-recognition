@@ -6,12 +6,12 @@ import os
 import numpy as np
 import time
 
-# Carga los modelos solo una vez (puedes importar estos objetos desde registers.py si ya los tienes allí)
+
 device = torch.device('cpu')
 model = InceptionResnetV1(pretrained='casia-webface').eval().to(device)
 mtcnn = MTCNN(keep_all=True, margin=20, min_face_size=20, device=device)
 
-# Ajusta esta ruta según tu estructura
+# Adjust this path according to your structure
 current_file_path = os.path.abspath(__file__)
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
 base_path = os.path.join(project_root, 'register_faces')
@@ -50,7 +50,7 @@ def compare_face(username, login_image_path, threshold=0.6):
     if not os.path.exists(registered_image_path):
         return False, "No registered image found."
 
-    # Procesar imagen registrada
+    # Process recorded image
     registered_image = Image.open(registered_image_path)
     if registered_image.mode == 'RGBA':
         registered_image = registered_image.convert('RGB')
@@ -59,7 +59,7 @@ def compare_face(username, login_image_path, threshold=0.6):
         return False, "No face detected in registered image."
     registered_embedding = model(registered_boxes).detach().cpu().numpy()[0]
 
-    # Procesar imagen de acceso
+    # Process access image
     login_image = Image.open(login_image_path)
     if login_image.mode == 'RGBA':
         login_image = login_image.convert('RGB')
