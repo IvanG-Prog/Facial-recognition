@@ -5,6 +5,8 @@ import cv2
 import os
 import re
 import shutil
+import base64
+from flask import jsonify
 
 device = torch.device('cpu')  # configuration
 
@@ -22,47 +24,44 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path
 base_path = os.path.join(project_root, 'register_faces')
 
 
-    # user dates
-def valid_name_lastname(input_data):
-    return bool(re.match("^[A-Za-záéíóúÁÉÍÓÚñÑ ]+$", input_data))
+def save_data(image, username, identity_card, first_names, last_name):
 
-def valid_ID(input_data):
-    return input_data.isdigit()
+    if not valid_name_lastname(first_names):
+            return False, "invalid name"
 
-def valid_username(input_data):
-    return bool(re.search("[A-Za-z !@#$%^&*()_+]+", input_data)) and bool(re.search("[0-9]", input_data))
+    if not valid_name_lastname(last_name):
+            return False, "Invalid Last name"
+
+    if not valid_ID(identity_card):
+            return False, "Invalid identity card"
+
+    if not valid_username(username):
+            return False, "Invalid username"
+
+    # Decode the base64 image
+    try:
+        user_dir = os.path.join(base_path, username)
+        os.makedirs(user_dir, exist_ok= True)
+        path = os.path.join(user_dir, 'registered_face.jpg')
+        if os.path.exists(path):
+            return False, "The user already exists."
+        header, encoded = image.split(",", 1)
+        img_bytes = base64.b64decode(encoded)
+
+        with open(path, "wb") as f:
+            f.write(img_bytes)
+            return True, path
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
 
 def register(first_names, last_name, identity_card, username, base_path):
 
-        if not valid_name_lastname(first_names):
-            return False, "invalid name"
-
-        if not valid_name_lastname(last_name):
-            return False, "Invalid Last name"
-
-        if not valid_ID(identity_card):
-            return False, "Invalid identity card"
-
-        if not valid_username(username):
-            return False, "Invalid username"
-
-
         user_dir = os.path.join(base_path, username)
-        if os.path.exists(user_dir):
-            return False, "The user already exists."
-
-        # Create the folder if it doesn't exist
-        os.makedirs(user_dir, exist_ok=True)
-
-        # Use the image saved in the backend
-        foto_temp = os.path.join(base_path, f"{username}_{identity_card}.png")
         foto_path = os.path.join(user_dir, 'registered_face.jpg')
-
-        if not os.path.exists(foto_temp):
+        if not os.path.exists(foto_path):
             return False, "The submitted photo was not found."
 
-        # Move the image to the user folder
-        shutil.move(foto_temp, foto_path)
 
         # Process the photo and obtain embeddings
         try:
@@ -80,6 +79,34 @@ def register(first_names, last_name, identity_card, username, base_path):
             data_file.write(f"Embeddings: {embeddings.tolist()}\n")  # save vector
 
         return True, "User successfully registered."
+
+ # user dates
+def valid_name_lastname(input_data):
+    return bool(re.match("^[A-Za-záéíóúÁÉÍÓÚñÑ ]+$", input_data))
+
+def valid_ID(input_data):
+    return input_data.isdigit()
+
+def valid_username(input_data):
+    return bool(re.search("[A-Za-z !@#$%^&*()_+]+", input_data)) and bool(re.search("[0-9]", input_data))
+
+
+
+def process_image(image_path):
+    image = Image.open(image_path)  # open image
+    if image.mode == 'RGBA':
+        image = image.convert('RGB')  # convert to RGB
+    boxes = mtcnn(image)  # boxes will contain the coordinates of the detected faces
+    if boxes is None:  # check if any faces were detected
+        raise RuntimeError("No face was detected in the photo.")
+
+    embeddings = model(boxes).detach().cpu().numpy()  #passes the face images through the FaceNet model to obtain a feature vector
+    return embeddings
+
+
+
+
+''' This funtion will only be used in consola:
 
 def take_photo_and_show(user_dir):  # function to take a photo
     cap = cv2.VideoCapture(0)  # open the default camera (0 is the index)
@@ -105,20 +132,8 @@ def take_photo_and_show(user_dir):  # function to take a photo
         elif key == ord('q'):
                 cv2.destroyAllWindows()
                 cap.release()
-                raise RuntimeError("Capture canceled by user")
+                raise RuntimeError("Capture canceled by user")'''
 
-
-
-def process_image(image_path):
-    image = Image.open(image_path)  # open image
-    if image.mode == 'RGBA':
-        image = image.convert('RGB')  # convert to RGB
-    boxes = mtcnn(image)  # boxes will contain the coordinates of the detected faces
-    if boxes is None:  # check if any faces were detected
-        raise RuntimeError("No face was detected in the photo.")
-
-    embeddings = model(boxes).detach().cpu().numpy()  #passes the face images through the FaceNet model to obtain a feature vector
-    return embeddings
 
 
 

@@ -273,24 +273,21 @@ def register_page():
         if not all(required):
             return jsonify({"status": "error", "message": "Missing data in the form"}), 400
 
-        # Temporarily save the image in base_path
-        try:
-            header, encoded = image.split(",", 1)
-            img_bytes = base64.b64decode(encoded)
-            os.makedirs(registers.base_path, exist_ok=True)
-            temp_img_path = os.path.join(registers.base_path, f"{username}_{id_card}.png")
-            with open(temp_img_path, "wb") as f:
-                f.write(img_bytes)
-        except Exception as e:
-            return jsonify({"status": "error", "message": f"Error saving image: {str(e)}"}), 400
+        # Call save image funtion
+        ok, result =  registers.save_data(image, username, id_card, name, lastname)
+        if not ok :
+            return jsonify({"status": "error", "message": result}), 400
 
-        # Call your logging function ONLY with the arguments it expects
+        # Call logging function ONLY with the arguments it expects
         try:
             success, message = registers.register(name, lastname, id_card, username, registers.base_path)
         except Exception as e:
-            return jsonify({"status": "error", "message": f"Error in registration: {str(e)}"}), 400
+            return jsonify({"status": "error", "message": str(e)}), 500
 
-        return jsonify({"status": "ok" if success else "error", "message": message}), 200 if success else 400
+        if success:
+            return jsonify({"status": "ok", "message": message}), 200
+        else:
+            return jsonify({"status": "error", "message": message}), 400
 
 
 @app.route('/access', methods=['GET', 'POST'])
@@ -457,57 +454,21 @@ def access_page():
         username = data.get('username')
         image_b64 = data.get('image')
 
-        # Paths
-        user_dir = os.path.join(registers.base_path, username)
-        registered_img_path = os.path.join(user_dir, 'registered_face.jpg')
-        login_img_path = os.path.join(user_dir, 'login_face.jpg')
+        required = [username, image_b64]
+        if not all(required):
+            return jsonify({"status": "error", "message": "Missing data in the form"}), 400
 
-        # Validations
-        if not os.path.exists(user_dir):
-            return jsonify({"status": "error", "message": "User not registered."}), 400
-        if not os.path.exists(registered_img_path):
-            return jsonify({"status": "error", "message": "No registered image found."}), 400
 
-        # Save the received image as login_face.jpg
-        try:
-            header, encoded = image_b64.split(",", 1)
-            img_bytes = base64.b64decode(encoded)
-            with open(login_img_path, "wb") as f:
-                f.write(img_bytes)
-        except Exception as e:
-            return jsonify({"status": "error", "message": f"Error saving login image: {str(e)}"}), 400
+        ok, result= access.access_save(username, image_b64)
+        if not ok:
+            return jsonify({"status": "error", "message": result}), 400
 
-        # Load models (reuse your registers.py logic)
-        device = registers.device
-        model = registers.model
-        mtcnn = registers.mtcnn
-
-        # Helper to get embedding
-        def get_embedding(img_path):
-            image = Image.open(img_path)
-            if image.mode == 'RGBA':
-                image = image.convert('RGB')
-            boxes = mtcnn(image)
-            if boxes is None:
-                raise RuntimeError("No face detected.")
-            embedding = model(boxes).detach().cpu().numpy()
-            return embedding[0]
-
-        # Get embeddings
-        try:
-            registered_embedding = get_embedding(registered_img_path)
-            login_embedding = get_embedding(login_img_path)
-        except Exception as e:
-            return jsonify({"status": "error", "message": str(e)}), 400
-
-        # Compare embeddings
-        distance = np.linalg.norm(registered_embedding - login_embedding)
-        threshold = 0.6  # Adjust as needed
-
-        if distance < threshold:
-            return jsonify({"status": "ok", "message": "Access granted."}), 200
+        success, message = access.compare_face(username, result)
+        if success:
+            return jsonify({"status": "ok", "message": message}), 200
         else:
-            return jsonify({"status": "error", "message": "Access denied. Face does not match."}), 401
+            return jsonify({"status": "error", "message": message}), 401
+
 
 
 @app.route('/documents')

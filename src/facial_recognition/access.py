@@ -5,22 +5,44 @@ import cv2
 import os
 import numpy as np
 import time
-
+import base64
+from flask import jsonify
 
 device = torch.device('cpu')
+
 model = InceptionResnetV1(pretrained='casia-webface').eval().to(device)
+
 mtcnn = MTCNN(keep_all=True, margin=20, min_face_size=20, device=device)
 
 # Adjust this path according to your structure
 current_file_path = os.path.abspath(__file__)
+
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
+
 base_path = os.path.join(project_root, 'register_faces')
 
-def main():
-    wait_time= 300
 
-    for attempt in range(3):
-        username = input("Enter your username to access: ")  # username request
+def access_save(username, image):
+    #wait_time= 300
+
+    try:
+        user_dir = os.path.join(base_path, username)
+        login_image_path = os.path.join(user_dir, 'login_face.jpg')  # path of the login image
+        if not os.path.exists(user_dir):
+            return False, "User not registered."
+        header, encoded = image.split(",", 1)
+        image_bytes =   base64.b64decode(encoded)
+
+        with open(login_image_path,'wb') as f:
+            f.write(image_bytes)
+            return True, login_image_path
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
+
+    #access_granted, message = compare_face(username, login_image_path)
+
+    '''for attempt in range(3):
         user_dir = os.path.join(base_path, username)
 
         if  os.path.exists(user_dir):  # check if the username isn't registered
@@ -32,14 +54,11 @@ def main():
             else:
                 print("You have reached the maximum number of attempts. Please wait 5 minutes.")
                 time.sleep(wait_time)
-                exit
+                exit'''
 
-    take_photo_and_show(user_dir)   # function call
+    #take_photo_and_show(user_dir)   # function call
 
-    login_image_path = os.path.join(user_dir, 'login_face.jpg')  # path of the login image
 
-    access_granted, message = compare_face(username, login_image_path)
-    print(message)
 
 def compare_face(username, login_image_path, threshold=0.6):
     user_dir = os.path.join(base_path, username)
@@ -68,12 +87,16 @@ def compare_face(username, login_image_path, threshold=0.6):
         return False, "No face detected in login image."
     login_embedding = model(login_boxes).detach().cpu().numpy()[0]
 
-    # Comparar embeddings
+    # Compare embeddings
     distance = np.linalg.norm(registered_embedding - login_embedding)
     if distance < threshold:
         return True, "Access granted."
     else:
         return False, "Access denied. The faces do not match."
+
+
+
+''' This funtion will only be used in consola:
 
 def take_photo_and_show(user_dir):  #function to take a photo
         cap = cv2.VideoCapture(0)  # open the default camera (0 is the index)
@@ -101,7 +124,4 @@ def take_photo_and_show(user_dir):  #function to take a photo
                 break
 
         cap.release()
-        cv2.destroyAllWindows()  # closed opencv window
-
-if __name__ == "__main__":
-    main()
+        cv2.destroyAllWindows()  # closed opencv window'''
