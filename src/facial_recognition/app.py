@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
-import registers
-import access
+import facial_recognition.registers as registers
+import facial_recognition.access as access
 import cv2
 import base64
 import os
@@ -273,7 +273,7 @@ def register_page():
         if not all(required):
             return jsonify({"status": "error", "message": "Missing data in the form"}), 400
 
-        # Call save image funtion
+        # Call save image function
         ok, result =  registers.save_data(image, username, id_card, name, lastname)
         if not ok :
             return jsonify({"status": "error", "message": result}), 400

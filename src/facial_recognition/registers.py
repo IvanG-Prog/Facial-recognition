@@ -58,14 +58,14 @@ def save_data(image, username, identity_card, first_names, last_name):
 def register(first_names, last_name, identity_card, username, base_path):
 
         user_dir = os.path.join(base_path, username)
-        foto_path = os.path.join(user_dir, 'registered_face.jpg')
-        if not os.path.exists(foto_path):
+        photo_path = os.path.join(user_dir, 'registered_face.jpg')
+        if not os.path.exists(photo_path):
             return False, "The submitted photo was not found."
 
 
         # Process the photo and obtain embeddings
         try:
-            embeddings = process_image(foto_path)
+            embeddings = process_image(photo_path)
         except RuntimeError as e:
             return False, str(e)
 
@@ -106,7 +106,7 @@ def process_image(image_path):
 
 
 
-''' This funtion will only be used in consola:
+''' This function will only be used in consola:
 
 def take_photo_and_show(user_dir):  # function to take a photo
     cap = cv2.VideoCapture(0)  # open the default camera (0 is the index)

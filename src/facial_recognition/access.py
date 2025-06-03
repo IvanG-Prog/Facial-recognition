@@ -1,7 +1,7 @@
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from PIL import Image
-import cv2
+#import cv2
 import os
 import numpy as np
 import time
@@ -96,7 +96,7 @@ def compare_face(username, login_image_path, threshold=0.6):
 
 
 
-''' This funtion will only be used in consola:
+''' This function will only be used in consola:
 
 def take_photo_and_show(user_dir):  #function to take a photo
         cap = cv2.VideoCapture(0)  # open the default camera (0 is the index)
