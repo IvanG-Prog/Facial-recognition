@@ -1,18 +1,19 @@
+"""
+This module is a Flask application that provides a web interface for facial recognition
+registration and access control.
+"""
 from flask import Flask, request, jsonify
 import facial_recognition.registers as registers
 import facial_recognition.access as access
-import cv2
-import base64
-import os
-import shutil
-import numpy as np
-from PIL import Image
-import io
+
 
 app= Flask(__name__)
 
 @app.route('/')
 def index():
+    """
+    Render the main page with options to register or access.
+    """
     return '''
 <!DOCTYPE html>
 <html lang="en">
@@ -98,6 +99,9 @@ def index():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register_page():
+    """
+    Render the registration page for new users.
+    """
     if request.method == 'GET':
         return '''
         <!DOCTYPE html>
@@ -259,7 +263,7 @@ def register_page():
         </body>
         </html>
     '''
-    elif request.method == 'POST':
+    if request.method == 'POST':
 
         datos = request.get_json()
         name = datos.get('name')
@@ -286,12 +290,14 @@ def register_page():
 
         if success:
             return jsonify({"status": "ok", "message": message}), 200
-        else:
-            return jsonify({"status": "error", "message": message}), 400
+        return jsonify({"status": "error", "message": message}), 400
 
 
 @app.route('/access', methods=['GET', 'POST'])
 def access_page():
+    """
+    Render the access page for users to authenticate using facial recognition.
+    """
     if request.method == 'GET':
         return '''
         <!DOCTYPE html>
@@ -448,7 +454,7 @@ def access_page():
         </html>
             '''
 
-    elif request.method == 'POST':
+    if request.method == 'POST':
 
         data = request.get_json()
         username = data.get('username')
@@ -466,13 +472,15 @@ def access_page():
         success, message = access.compare_face(username, result)
         if success:
             return jsonify({"status": "ok", "message": message}), 200
-        else:
-            return jsonify({"status": "error", "message": message}), 401
+        return jsonify({"status": "error", "message": message}), 401
 
 
 
 @app.route('/documents')
 def documents_page():
+    """
+    Render the documents page for authenticated users.
+    """
     return '''
 <!DOCTYPE html>
 <html lang="en">

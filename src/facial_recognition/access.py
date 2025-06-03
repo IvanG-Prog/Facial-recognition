@@ -1,12 +1,15 @@
+"""
+This module provides functions to register a new user with their personal data and photo.
+It includes functions to validate user data, save the user's photo,
+and process the photo to obtain face embeddings.
+"""
+import os
+import base64
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from PIL import Image
-#import cv2
-import os
 import numpy as np
-import time
-import base64
-from flask import jsonify
+
 
 device = torch.device('cpu')
 
@@ -23,14 +26,19 @@ base_path = os.path.join(project_root, 'register_faces')
 
 
 def access_save(username, image):
-    #wait_time= 300
+    """
+    Save the login image for the user and check if the user is registered.
+    This function decodes the base64 image, saves it to the user's directory,
+    and returns the path of the saved image.
+    """
+
 
     try:
         user_dir = os.path.join(base_path, username)
         login_image_path = os.path.join(user_dir, 'login_face.jpg')  # path of the login image
         if not os.path.exists(user_dir):
             return False, "User not registered."
-        header, encoded = image.split(",", 1)
+        _, encoded = image.split(",", 1)
         image_bytes =   base64.b64decode(encoded)
 
         with open(login_image_path,'wb') as f:
@@ -40,27 +48,12 @@ def access_save(username, image):
         return False, f"Error: {str(e)}"
 
 
-    #access_granted, message = compare_face(username, login_image_path)
-
-    '''for attempt in range(3):
-        user_dir = os.path.join(base_path, username)
-
-        if  os.path.exists(user_dir):  # check if the username isn't registered
-            break
-        else:
-            print("The user is not registered.")
-            if attempt < 2:
-                print("Please try again. You have",2 - attempt, "attempts left.")
-            else:
-                print("You have reached the maximum number of attempts. Please wait 5 minutes.")
-                time.sleep(wait_time)
-                exit'''
-
-    #take_photo_and_show(user_dir)   # function call
-
-
-
 def compare_face(username, login_image_path, threshold=0.6):
+    """
+    Compare the face in the login image with the registered face of the user.
+    This function checks if the user is registered, processes the images,
+    and compares the face embeddings to determine access.
+    """
     user_dir = os.path.join(base_path, username)
     registered_image_path = os.path.join(user_dir, 'registered_face.jpg')
 
@@ -91,37 +84,5 @@ def compare_face(username, login_image_path, threshold=0.6):
     distance = np.linalg.norm(registered_embedding - login_embedding)
     if distance < threshold:
         return True, "Access granted."
-    else:
-        return False, "Access denied. The faces do not match."
 
-
-
-''' This function will only be used in consola:
-
-def take_photo_and_show(user_dir):  #function to take a photo
-        cap = cv2.VideoCapture(0)  # open the default camera (0 is the index)
-        if not cap.isOpened():
-            print("THE CAMERA COULD NOT BE OPEN.")
-            return None
-
-        while True:  # Loop for Video Capture
-            ret, frame = cap.read()  # ?????
-            if not ret:
-                print("THE PHOTO COULD NOT BE TAKEN.")
-                break
-
-            cv2.imshow('Press "s" to take the photo or "q" to exit', frame)
-
-            # wait for the user to press 's' or 'q'
-            key = cv2.waitKey(1)
-            if key == ord('s'):
-                new_image_path = os.path.join(user_dir, 'login_face.jpg')  # path for the image
-                cv2.imwrite(new_image_path, frame)  # load image in the path
-                print("Photo saved as:", new_image_path)
-                break
-            elif key == ord('q'):
-                print("Departure canceled.")
-                break
-
-        cap.release()
-        cv2.destroyAllWindows()  # closed opencv window'''
+    return False, "Access denied. The faces do not match."
