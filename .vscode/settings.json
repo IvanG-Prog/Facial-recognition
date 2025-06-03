@@ -1,10 +1,10 @@
 {
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true,
-    "editor.formatOnSave": true,
-    "python.formatting.provider": "black",
-    "[python]": {
-      "editor.defaultFormatter": "ms-python.python"
-    },
-    "python.defaultInterpreterPath": "/home/tanogedler/Upwork/biometric-blockchain/Facial-recognition/.venv"
-  }
+  "python.linting.pylintEnabled": true,
+  "python.linting.enabled": true,
+  "editor.formatOnSave": true,
+  "python.formatting.provider": "black",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.python"
+  },
+  "python.defaultInterpreterPath": "/home/ivang/Ivan/git/facial/.venv"
+}

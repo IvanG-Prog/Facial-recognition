@@ -5,34 +5,44 @@ import cv2
 import os
 import numpy as np
 import time
+import base64
+from flask import jsonify
 
-def main():
-    device = torch.device('cpu')  # configuration
+device = torch.device('cpu')
 
-    model = InceptionResnetV1(pretrained='casia-webface').eval().to(device)  # load facenet model
+model = InceptionResnetV1(pretrained='casia-webface').eval().to(device)
 
-    mtcnn = MTCNN(keep_all=True, margin=20, min_face_size=20, device=device)  # load mtcnn for face detection,
+mtcnn = MTCNN(keep_all=True, margin=20, min_face_size=20, device=device)
 
+# Adjust this path according to your structure
+current_file_path = os.path.abspath(__file__)
 
-    #base_path = "/home/ivang/Ivan/Python/pytorch/facenet/resgister_faces"  # database path
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
 
-    #check that register_faces exists
-    if not os.path.exists('register_faces'):
-        print("The register_faces folder does not exist. Please run the registers.py script first.")
-        exit(1)
-    # Absolute path of the current file
-    current_file_path = os.path.abspath(__file__)
-    # Go up three directories: facial_recognition → src → project root
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
-    # Path to the new folder at the project root level
-    base_path = os.path.join(project_root, 'register_faces')
+base_path = os.path.join(project_root, 'register_faces')
 
 
-    wait_time= 300
+def access_save(username, image):
+    #wait_time= 300
+
+    try:
+        user_dir = os.path.join(base_path, username)
+        login_image_path = os.path.join(user_dir, 'login_face.jpg')  # path of the login image
+        if not os.path.exists(user_dir):
+            return False, "User not registered."
+        header, encoded = image.split(",", 1)
+        image_bytes =   base64.b64decode(encoded)
+
+        with open(login_image_path,'wb') as f:
+            f.write(image_bytes)
+            return True, login_image_path
+    except Exception as e:
+        return False, f"Error: {str(e)}"
 
 
-    for attempt in range(3):
-        username = input("Enter your username to access: ")  # username request
+    #access_granted, message = compare_face(username, login_image_path)
+
+    '''for attempt in range(3):
         user_dir = os.path.join(base_path, username)
 
         if  os.path.exists(user_dir):  # check if the username isn't registered
@@ -44,53 +54,49 @@ def main():
             else:
                 print("You have reached the maximum number of attempts. Please wait 5 minutes.")
                 time.sleep(wait_time)
-                exit
+                exit'''
 
-    image_path = os.path.join(user_dir, 'registered_face.jpg')  # path of the resgistered image
-
-    if not os.path.exists(image_path):  # check if there is a registered image
-        print("No registered image found.")
-        exit(1)
-
-    registered_image = Image.open(image_path)  # open the image with PIL
-
-    registered_boxes = mtcnn(registered_image)  # boxes will contain the coordinates of the detected faces
-
-    if registered_boxes is None:   # check if any faces were detected
-        print("No face was detected in the recorded image.")
-        exit(1)
-
-    registered_embedding = model(registered_boxes).detach().cpu().numpy() #passes the face images through the FaceNet model to obtain a feature vector
+    #take_photo_and_show(user_dir)   # function call
 
 
 
+def compare_face(username, login_image_path, threshold=0.6):
+    user_dir = os.path.join(base_path, username)
+    registered_image_path = os.path.join(user_dir, 'registered_face.jpg')
 
-    take_photo_and_show(user_dir)   # function call
+    if not os.path.exists(user_dir):
+        return False, "User is not registered."
+    if not os.path.exists(registered_image_path):
+        return False, "No registered image found."
 
-    new_image = Image.open(os.path.join(user_dir, 'login_face.jpg'))  # open the new image
+    # Process recorded image
+    registered_image = Image.open(registered_image_path)
+    if registered_image.mode == 'RGBA':
+        registered_image = registered_image.convert('RGB')
+    registered_boxes = mtcnn(registered_image)
+    if registered_boxes is None:
+        return False, "No face detected in registered image."
+    registered_embedding = model(registered_boxes).detach().cpu().numpy()[0]
 
-    new_boxes = mtcnn(new_image)  #boxes will contain the coordinates of the detected faces
+    # Process access image
+    login_image = Image.open(login_image_path)
+    if login_image.mode == 'RGBA':
+        login_image = login_image.convert('RGB')
+    login_boxes = mtcnn(login_image)
+    if login_boxes is None:
+        return False, "No face detected in login image."
+    login_embedding = model(login_boxes).detach().cpu().numpy()[0]
 
-    if new_boxes is None:   # check if any faces were detected
-        print("No face was detected in the recorded image.")
-        exit(1)
-
-    new_embedding = model(new_boxes).detach().cpu().numpy()  #passes the face images through the FaceNet model to obtain a feature vector
-
-
-    def compare_embeddings(embedding1, embedding2):  # function to compare embeddings using the euclidean distance
-        distance = np.linalg.norm(embedding1 - embedding2)
-        return distance
-
-    distance = compare_embeddings(registered_embedding[0], new_embedding[0])  # function call
-
-    threshold = 0.6  # adjust if necessary
-
+    # Compare embeddings
+    distance = np.linalg.norm(registered_embedding - login_embedding)
     if distance < threshold:
-        print("Access granted.")
+        return True, "Access granted."
     else:
-        print("Access denied. The images do not mach.")
+        return False, "Access denied. The faces do not match."
 
+
+
+''' This funtion will only be used in consola:
 
 def take_photo_and_show(user_dir):  #function to take a photo
         cap = cv2.VideoCapture(0)  # open the default camera (0 is the index)
@@ -118,7 +124,4 @@ def take_photo_and_show(user_dir):  #function to take a photo
                 break
 
         cap.release()
-        cv2.destroyAllWindows()  # closed opencv window
-
-if __name__ == "__main__":
-    main()
+        cv2.destroyAllWindows()  # closed opencv window'''
