@@ -32,3 +32,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 registers = "facial_recognition.registers:main"
 access = "facial_recognition.access:main"
+flask = "facial_recognition.app:app.run(debug=True)"
