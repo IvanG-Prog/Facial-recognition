@@ -7,6 +7,7 @@ import re
 import shutil
 import base64
 from flask import jsonify
+import numpy as np
 
 device = torch.device('cpu')  # configuration
 
@@ -23,73 +24,63 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path
 # Path to the new folder at the project root level
 base_path = os.path.join(project_root, 'register_faces')
 
+def check_username(username):
+    user_dir = os.path.join(base_path,username)
+    return not os.path.exists(user_dir)
+
+def duplicate_face(new_embedding, base_path,threshold=0.6 ):
+    for user in os.listdir(base_path):
+        user_dir = os.path.join(base_path, user)
+        data_file = os.path.join(user_dir, 'user_data.txt')
+        if os.path.exists(data_file):
+            with open (data_file, 'r') as f:
+                for x in f:
+                    if x.startswith('Embeddings:'):
+                        str = x.replace('Embeddings:', '').strip()
+                        try:
+                            emb_list =eval(str)
+                            old_embedding = np.array(emb_list)
+                            dist = np.linalg.norm(new_embedding - old_embedding)
+                            if dist < threshold:
+                                return True
+                        except Exception:
+                            continue
+    return False
 
 def save_data(image, username, identity_card, first_names, last_name):
-
-    if not valid_name_lastname(first_names):
-            return False, "invalid name"
-
-    if not valid_name_lastname(last_name):
-            return False, "Invalid Last name"
-
-    if not valid_ID(identity_card):
-            return False, "Invalid identity card"
-
-    if not valid_username(username):
-            return False, "Invalid username"
-
     # Decode the base64 image
     try:
+        header, encoded = image.split(",", 1)
+        img_bytes = base64.b64decode(encoded)
+        temp_path = "/tmp/temp_face.jpg"
+        with open(temp_path, "wb") as f:
+            f.write(img_bytes)
+        new_embedding = process_image(temp_path)
+
+        if duplicate_face(new_embedding, base_path):
+             return False, "A user with this face is already registered."
+
         user_dir = os.path.join(base_path, username)
         os.makedirs(user_dir, exist_ok= True)
         path = os.path.join(user_dir, 'registered_face.jpg')
         if os.path.exists(path):
-            return False, "The user already exists."
-        header, encoded = image.split(",", 1)
-        img_bytes = base64.b64decode(encoded)
+            return False, "This username is already registered"
 
         with open(path, "wb") as f:
             f.write(img_bytes)
-            return True, path
-    except Exception as e:
-        return False, f"Error: {str(e)}"
 
 
-def register(first_names, last_name, identity_card, username, base_path):
-
-        user_dir = os.path.join(base_path, username)
-        foto_path = os.path.join(user_dir, 'registered_face.jpg')
-        if not os.path.exists(foto_path):
-            return False, "The submitted photo was not found."
-
-
-        # Process the photo and obtain embeddings
-        try:
-            embeddings = process_image(foto_path)
-        except RuntimeError as e:
-            return False, str(e)
-
-        # Save data
-        data_file_path = os.path.join(user_dir, 'user_data.txt')  # created a text file to save the data
+        data_file_path = os.path.join(user_dir, 'user_data.txt')
         with open(data_file_path, 'w') as data_file:
             data_file.write("Name: " + first_names + "\n")
             data_file.write("Last name: " + last_name + "\n")
             data_file.write("Identity card: " + identity_card + "\n")
             data_file.write("Username: " + username + "\n")
-            data_file.write(f"Embeddings: {embeddings.tolist()}\n")  # save vector
+            data_file.write(f"Embeddings: {new_embedding.tolist()}\n")
 
-        return True, "User successfully registered."
-
- # user dates
-def valid_name_lastname(input_data):
-    return bool(re.match("^[A-Za-záéíóúÁÉÍÓÚñÑ ]+$", input_data))
-
-def valid_ID(input_data):
-    return input_data.isdigit()
-
-def valid_username(input_data):
-    return bool(re.search("[A-Za-z !@#$%^&*()_+]+", input_data)) and bool(re.search("[0-9]", input_data))
-
+        return True, "User successfully registred."
+    except Exception as e:
+        return False, f"Error: {str(e)}"
 
 
 def process_image(image_path):

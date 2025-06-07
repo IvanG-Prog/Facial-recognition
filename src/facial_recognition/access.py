@@ -21,6 +21,18 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path
 
 base_path = os.path.join(project_root, 'register_faces')
 
+def get_ssnn_registred(username):
+    user_dir = os.path.join(base_path, username)
+    user_data = os.path.join(user_dir, 'user_data.txt')
+    if not  os.path.exists(user_data):
+        return None
+    with open(user_data, 'r') as f:
+        for line in f:
+            if line.startswith('Identity card:'):
+                return line.replace('Identity card:', "").strip()
+
+    return None
+
 
 def access_save(username, image):
     #wait_time= 300
@@ -39,22 +51,6 @@ def access_save(username, image):
     except Exception as e:
         return False, f"Error: {str(e)}"
 
-
-    #access_granted, message = compare_face(username, login_image_path)
-
-    '''for attempt in range(3):
-        user_dir = os.path.join(base_path, username)
-
-        if  os.path.exists(user_dir):  # check if the username isn't registered
-            break
-        else:
-            print("The user is not registered.")
-            if attempt < 2:
-                print("Please try again. You have",2 - attempt, "attempts left.")
-            else:
-                print("You have reached the maximum number of attempts. Please wait 5 minutes.")
-                time.sleep(wait_time)
-                exit'''
 
     #take_photo_and_show(user_dir)   # function call
 
