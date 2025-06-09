@@ -109,6 +109,7 @@ def check_username_endpoint():
     else:
        return jsonify({"available": False, "message": "Username already exists"}), 400
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register_page():
     if request.method == 'GET':
@@ -318,7 +319,14 @@ def register_page():
             }).then(response => response.json())
             .then(data => {
                 alert(data.message);
-                if (data.status === "ok") {
+                const video = document.getElementById('video');
+                if (video && video.srcObject) {
+                    let tracks = video.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                    video.srcObject = null;
+                }
+                if (data.status === "ok" || data.status === "face_exists") {
+                    console.log("Redirecting now...");
                     window.location.href = "/";
                 }
             })
@@ -344,8 +352,10 @@ def register_page():
             return jsonify({"status": "ok", "message": result}), 200
 
         else:
-            return jsonify({"status": "error", "message":result}), 400
-
+            if "face" in result.lower() and "register" in result.lower():
+                return jsonify({"status": "face_exists", "message":result}), 200
+            print("REGISTER ERROR:", result)
+            return jsonify({"status": "error", "message": result}), 400
 
 @app.route('/validate_user', methods=['POST'])
 def validate_user():
