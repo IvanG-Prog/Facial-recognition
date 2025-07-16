@@ -97,13 +97,27 @@ def index():
 </html>
     '''
 
+@app.route('/check_username', methods=['POST'])
+def check_username_endpoint():
+    data = request.get_json()
+    username = data.get('username')
+    if not username:
+        return jsonify({'available': False, 'message': "No username provided"}), 400
+
+    ok = registers.check_username(username)
+    if ok :
+        return jsonify({"available": True, "message": "Username is available"}), 200
+    else:
+       return jsonify({"available": False, "message": "Username already exists"}), 400
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register_page():
     """
     Render the registration page for new users.
     """
     if request.method == 'GET':
-        return '''
+        return r'''
         <!DOCTYPE html>
         <html lang="es">
         <head>
@@ -192,24 +206,24 @@ def register_page():
                 <form id="registroForm" autocomplete="off">
                     <input name="name" placeholder="Name" required>
                     <input name="lastname" placeholder="Last Name" required>
-                    <input name="id" placeholder="ID" required>
+                    <input name="id" placeholder="SSNN" required>
                     <input name="username" placeholder="Username" required>
-                    <button type="button" onclick="startCamera()">Activate camera</button>
+                    <button type="button" onclick="validateAndActivate()">Activate camera</button>
                 </form>
                 <video id="video" width="320" height="240" autoplay></video>
                 <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
                 <p id="msg"></p>
             </div>
         <script>
-        let streamActivo = false;
+        let streamActive = false;
         function startCamera() {
             const video = document.getElementById('video');
             video.style.display = 'block';
             navigator.mediaDevices.getUserMedia({ video: true })
             .then(function(stream) {
                 video.srcObject = stream;
-                streamActivo = true;
-                document.getElementById('msg').innerText = "Press S to take the photo and register.";
+                streamActive = true;
+                document.getElementById('msg').innerText = "Press Enter to take the photo and register.";
             })
             .catch(function(err) {
                 alert('The camera could not be accessed: ' + err);
@@ -217,12 +231,68 @@ def register_page():
         }
 
         document.addEventListener('keydown', function(event) {
-            if (event.key === 's' || event.key === 'S') {
-                if (streamActivo) {
+            if (event.key === 'Enter') {
+                if (streamActive) {
+                    event.preventDefault();
                     takePhotoAndRecord();
                 }
             }
         });
+
+        function validateAndActivate() {
+    const form = document.getElementById('registroForm');
+
+    const name = form.name.value.trim();
+    const lastName = form.lastname.value.trim();
+    const id = form.id.value.trim();
+    const username = form.username.value.trim();
+
+    // Check for empty fields first
+    if (!name || !lastName || !id || !username) {
+        alert("Please fill in all fields before activating the camera.");
+        return;
+    }
+
+    // Validations:
+    const numbersOnly = /^\d+$/;
+    const lettersAndSpaces = /^[A-Za-z\s]+$/;
+    const validUsername = /^[A-Za-z0-9!@#\$%\^&\*\-_\+=\{\}\[\]\(\)\|\\:;'<>,\.\?\/]+$/;
+
+    if (!name.match(lettersAndSpaces)) {
+        alert("Name must contain only letters and spaces.");
+        return;
+    }
+
+    if (!lastName.match(lettersAndSpaces)) {
+        alert("Last name must contain only letters and spaces.");
+        return;
+    }
+
+    if (!id.match(numbersOnly)) {
+        alert("ID must contain only numbers.");
+        return;
+    }
+
+    if (!username.match(validUsername)) {
+        alert("Username can contain letters, numbers, and allowed special characters.");
+        return;
+    }
+
+    fetch('/check_username', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username: username})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.available) {
+            startCamera();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(err => alert('Error checking username: ' + err));
+}
 
         function takePhotoAndRecord() {
             const video = document.getElementById('video');
@@ -253,7 +323,14 @@ def register_page():
             }).then(response => response.json())
             .then(data => {
                 alert(data.message);
-                if (data.status === "ok") {
+                const video = document.getElementById('video');
+                if (video && video.srcObject) {
+                    let tracks = video.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                    video.srcObject = null;
+                }
+                if (data.status === "ok" || data.status === "face_exists") {
+                    console.log("Redirecting now...");
                     window.location.href = "/";
                 }
             })
@@ -272,25 +349,33 @@ def register_page():
         username = datos.get('username')
         image = datos.get('image')
 
-        #Data validation
-        required = [name, lastname, id_card, username, image]
-        if not all(required):
-            return jsonify({"status": "error", "message": "Missing data in the form"}), 400
 
         # Call save image function
         ok, result =  registers.save_data(image, username, id_card, name, lastname)
-        if not ok :
+        if ok :
+            return jsonify({"status": "ok", "message": result}), 200
+
+        else:
+            if "face" in result.lower() and "register" in result.lower():
+                return jsonify({"status": "face_exists", "message":result}), 200
+            print("REGISTER ERROR:", result)
             return jsonify({"status": "error", "message": result}), 400
 
-        # Call logging function ONLY with the arguments it expects
-        try:
-            success, message = registers.register(name, lastname, id_card, username, registers.base_path)
-        except Exception as e:
-            return jsonify({"status": "error", "message": str(e)}), 500
+@app.route('/validate_user', methods=['POST'])
+def validate_user():
+    data = request.get_json()
+    username = data.get('username')
+    ssnn = data.get('ssnn')
+    if not username or not ssnn:
+        return jsonify({"status": "error", "message": "Missing username or SSNN"}), 400
 
-        if success:
-            return jsonify({"status": "ok", "message": message}), 200
-        return jsonify({"status": "error", "message": message}), 400
+    registred_ssnn = access.get_ssnn_registred(username)
+    if not registred_ssnn:
+        return jsonify({"status": "error", "message": "User not found"}), 404
+    if ssnn != registred_ssnn:
+        return jsonify({"status": "error", "message": "SSNN does not match"}), 401
+
+    return jsonify({"status": "ok", "message": "User and SSNN validated"}), 200
 
 
 @app.route('/access', methods=['GET', 'POST'])
@@ -299,7 +384,7 @@ def access_page():
     Render the access page for users to authenticate using facial recognition.
     """
     if request.method == 'GET':
-        return '''
+        return r'''
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -387,13 +472,46 @@ def access_page():
                 <h2>Secure Access</h2>
                 <form id="accessForm" autocomplete="off">
                     <input name="username" placeholder="Username" required>
-                    <button type="button" onclick="startCamera()">Activate camera</button>
+                    <input name="ssnn" placeholder="SSNN" required>
+                    <button type="button" onclick="validateAndStartCamera()">Activate camera</button>
                 </form>
                 <video id="video" width="320" height="240" autoplay></video>
                 <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
                 <p id="msg"></p>
             </div>
         <script>
+        function validateAndStartCamera() {
+            const form = document.getElementById('accessForm');
+            const username = form.username.value.trim();
+            const ssnn = form.ssnn.value.trim();
+
+            if (!username || !ssnn) {
+                alert("Please fill in both Username and SSNN before activating the camera.");
+                return;
+            }
+
+            const numbersOnly = /^\d+$/;
+            if (!ssnn.match(numbersOnly)) {
+                alert("SSNN must contain only numbers.");
+                return;
+            }
+            fetch('/validate_user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: username, ssnn: ssnn})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "ok") {
+                    startCamera();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(err => alert('Error: ' + err));
+
+}
+
         let streamActive = false;
         function startCamera() {
             const video = document.getElementById('video');
@@ -402,7 +520,7 @@ def access_page():
             .then(function(stream) {
                 video.srcObject = stream;
                 streamActive = true;
-                document.getElementById('msg').innerText = "Press S to take the photo and access.";
+                document.getElementById('msg').innerText = "Press Enter to take the photo and access.";
             })
             .catch(function(err) {
                 alert('The camera could not be accessed: ' + err);
@@ -410,7 +528,7 @@ def access_page():
         }
 
         document.addEventListener('keydown', function(event) {
-            if (event.key === 's' || event.key === 'S') {
+            if (event.key === 'Enter') {
                 if (streamActive) {
                     takePhotoAndAccess();
                 }
@@ -428,12 +546,13 @@ def access_page():
 
         function access(imageBase64) {
             const form = document.getElementById('accessForm');
-            if (!form.username.value) {
-                alert('Please enter your username before taking the photo.');
+            if (!form.username.value || !form.ssnn.value) {
+                alert('Please enter your username and SSNN before taking the photo.');
                 return;
             }
             const data = {
                 username: form.username.value,
+                ssnn: form.ssnn.value,
                 image: imageBase64
             };
             fetch('/access', {
@@ -458,11 +577,18 @@ def access_page():
 
         data = request.get_json()
         username = data.get('username')
+        ssnn = data.get('ssnn')
         image_b64 = data.get('image')
 
-        required = [username, image_b64]
+        required = [username, ssnn, image_b64]
         if not all(required):
             return jsonify({"status": "error", "message": "Missing data in the form"}), 400
+
+        resgistred_ssnn = access.get_ssnn_registred(username)
+        if not resgistred_ssnn:
+            return jsonify({"status": "error", "message": "User not found"}), 404
+        if ssnn != resgistred_ssnn:
+            return jsonify({"status": "error", "message": "SSNN does not match"}), 401
 
 
         ok, result= access.access_save(username, image_b64)
@@ -473,6 +599,10 @@ def access_page():
         if success:
             return jsonify({"status": "ok", "message": message}), 200
         return jsonify({"status": "error", "message": message}), 401
+
+
+
+
 
 
 
@@ -530,6 +660,25 @@ def documents_page():
     font-size: 0.95em;
     letter-spacing: 1px;
   }
+  .btn-logout {
+    width: 100%;
+    padding: 14px 0;
+    margin-top: 24px;
+    font-size: 1.1em;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #00ffe7 0%, #007cf0 100%);
+    color: #181f2a;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px #00ffe744;
+    letter-spacing: 1px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-logout:hover {
+    background: linear-gradient(90deg, #007cf0 0%, #00ffe7 100%);
+    color: #fff;
+  }
 </style>
 </head>
 <body>
@@ -542,6 +691,7 @@ def documents_page():
         <li>Document 3.pdf</li>
       </ul>
     </div>
+    <button class="btn-logout" onclick="window.location.href='/'">Logout</button>
     <div class="footer">© 2025 Cybersecurity Facial System</div>
   </div>
 </body>

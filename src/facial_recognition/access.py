@@ -24,6 +24,18 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path
 
 base_path = os.path.join(project_root, 'register_faces')
 
+def get_ssnn_registred(username):
+    user_dir = os.path.join(base_path, username)
+    user_data = os.path.join(user_dir, 'user_data.txt')
+    if not  os.path.exists(user_data):
+        return None
+    with open(user_data, 'r') as f:
+        for line in f:
+            if line.startswith('Identity card:'):
+                return line.replace('Identity card:', "").strip()
+
+    return None
+
 
 def access_save(username, image):
     """
@@ -46,6 +58,10 @@ def access_save(username, image):
             return True, login_image_path
     except Exception as e:
         return False, f"Error: {str(e)}"
+
+
+    #take_photo_and_show(user_dir)   # function call
+
 
 
 def compare_face(username, login_image_path, threshold=0.6):

@@ -11,6 +11,7 @@ from facenet_pytorch import InceptionResnetV1, MTCNN
 from PIL import Image
 
 
+import numpy as np
 
 device = torch.device('cpu')  # configuration
 # load facenet model
@@ -27,6 +28,28 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path
 # Path to the new folder at the project root level
 base_path = os.path.join(project_root, 'register_faces')
 
+def check_username(username):
+    user_dir = os.path.join(base_path,username)
+    return not os.path.exists(user_dir)
+
+def duplicate_face(new_embedding, base_path,threshold=0.6 ):
+    for user in os.listdir(base_path):
+        user_dir = os.path.join(base_path, user)
+        data_file = os.path.join(user_dir, 'user_data.txt')
+        if os.path.exists(data_file):
+            with open (data_file, 'r') as f:
+                for x in f:
+                    if x.startswith('Embeddings:'):
+                        str = x.replace('Embeddings:', '').strip()
+                        try:
+                            emb_list =eval(str)
+                            old_embedding = np.array(emb_list)
+                            dist = np.linalg.norm(new_embedding - old_embedding)
+                            if dist < threshold:
+                                return True
+                        except Exception:
+                            continue
+    return False
 
 def save_data(image, username, identity_card, first_names, last_name):
     """
@@ -49,81 +72,37 @@ def save_data(image, username, identity_card, first_names, last_name):
 
     # Decode the base64 image
     try:
+        header, encoded = image.split(",", 1)
+        img_bytes = base64.b64decode(encoded)
+        temp_path = "/tmp/temp_face.jpg"
+        with open(temp_path, "wb") as f:
+            f.write(img_bytes)
+        new_embedding = process_image(temp_path)
+
+        if duplicate_face(new_embedding, base_path):
+             return False, "A user with this face is already registered."
+
         user_dir = os.path.join(base_path, username)
         os.makedirs(user_dir, exist_ok= True)
         path = os.path.join(user_dir, 'registered_face.jpg')
         if os.path.exists(path):
-            return False, "The user already exists."
-        _, encoded = image.split(",", 1)
-        img_bytes = base64.b64decode(encoded)
+            return False, "This username is already registered"
 
         with open(path, "wb") as f:
             f.write(img_bytes)
-            return True, path
+
+
+        data_file_path = os.path.join(user_dir, 'user_data.txt')
+        with open(data_file_path, 'w') as data_file:
+            data_file.write("Name: " + first_names + "\n")
+            data_file.write("Last name: " + last_name + "\n")
+            data_file.write("Identity card: " + identity_card + "\n")
+            data_file.write("Username: " + username + "\n")
+            data_file.write(f"Embeddings: {new_embedding.tolist()}\n")
+
+        return True, "User successfully registred."
     except Exception as e:
         return False, f"Error: {str(e)}"
-
-
-def register(first_names, last_name, identity_card, username, base_path):
-    """
-    Register a new user.
-    This function checks if the user already exists, validates the input data,
-    processes the photo to obtain face embeddings, and saves the user data.
-    :param first_names: First names of the user.
-    :param last_name: Last name of the user.
-    :param identity_card: Identity card number of the user.
-    :param username: Username of the user.
-    :param base_path: Base path where user data will be stored.
-    :return: Tuple (success, message) indicating the result of the registration.
-    """
-
-    user_dir = os.path.join(base_path, username)
-    photo_path = os.path.join(user_dir, 'registered_face.jpg')
-    if not os.path.exists(photo_path):
-        return False, "The submitted photo was not found."
-
-
-    # Process the photo and obtain embeddings
-    try:
-        embeddings = process_image(photo_path)
-    except RuntimeError as e:
-        return False, str(e)
-
-    # Save data
-    # created a text file to save the data
-    data_file_path = os.path.join(user_dir, 'user_data.txt')
-    with open(data_file_path, 'w', encoding='utf-8') as data_file:
-        data_file.write("Name: " + first_names + "\n")
-        data_file.write("Last name: " + last_name + "\n")
-        data_file.write("Identity card: " + identity_card + "\n")
-        data_file.write("Username: " + username + "\n")
-        data_file.write(f"Embeddings: {embeddings.tolist()}\n")  # save vector
-
-    return True, "User successfully registered."
-
- # user dates
-def valid_name_lastname(input_data):
-    """
-    Validate the first name and last name.
-    The name must contain only letters (including accented characters) and spaces.
-    It should not contain numbers or special characters.
-    """
-    return bool(re.match("^[A-Za-záéíóúÁÉÍÓÚñÑ ]+$", input_data))
-
-def valid_id(input_data):
-    """
-    Validate the identity card number.
-    The identity card number must contain only digits.
-    """
-    return input_data.isdigit()
-
-def valid_username(input_data):
-    """
-    Validate the username.
-    The username must contain at least one letter, one number, and can include special characters.
-    """
-    return bool(re.search("[A-Za-z !@#$%^&*()_+]+", input_data)) and bool(re.search("[0-9]", input_data))
-
 
 
 def process_image(image_path):
