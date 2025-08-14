@@ -58,7 +58,7 @@ def save_data(image, username, identity_card, first_names, last_name):
     and saves the user data and photo.
     """
 
-    if not valid_name_lastname(first_names):
+    '''if not valid_name_lastname(first_names):
         return False, "invalid name"
 
     if not valid_name_lastname(last_name):
@@ -68,7 +68,7 @@ def save_data(image, username, identity_card, first_names, last_name):
         return False, "Invalid identity card"
 
     if not valid_username(username):
-        return False, "Invalid username"
+        return False, "Invalid username"'''
 
     # Decode the base64 image
     try:
@@ -119,3 +119,5 @@ def process_image(image_path):
     # passes the face images through the FaceNet model to obtain a feature vector
     embeddings = model(boxes).detach().cpu().numpy()
     return embeddings
+
+
