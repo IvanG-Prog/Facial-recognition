@@ -1,4 +1,10 @@
-FROM python:3.10
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y \
+  libjpeg-dev \
+  zlib1g-dev \
+  libpng-dev \
+  build-essential
 
 WORKDIR /app
 
@@ -7,4 +13,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:7860"]
+CMD ["gunicorn", "src.facial_recognition.app:app", "--bind", "0.0.0.0:7860"]
