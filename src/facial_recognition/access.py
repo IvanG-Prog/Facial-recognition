@@ -1,10 +1,8 @@
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from PIL import Image
-import cv2
 import os
 import numpy as np
-import time
 import base64
 from flask import jsonify
 
@@ -14,110 +12,71 @@ model = InceptionResnetV1(pretrained='casia-webface').eval().to(device)
 
 mtcnn = MTCNN(keep_all=True, margin=20, min_face_size=20, device=device)
 
-# Adjust this path according to your structure
-current_file_path = os.path.abspath(__file__)
 
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
 
-base_path = os.path.join(project_root, 'register_faces')
+def get_ssnn_registred(username, db_connection):
+    user_data = db_connection.data.find_one({"username": username})
 
-def get_ssnn_registred(username):
-    user_dir = os.path.join(base_path, username)
-    user_data = os.path.join(user_dir, 'user_data.txt')
-    if not  os.path.exists(user_data):
-        return None
-    with open(user_data, 'r') as f:
-        for line in f:
-            if line.startswith('Identity card:'):
-                return line.replace('Identity card:', "").strip()
-
+    if user_data:
+        return user_data.get("id_card")
     return None
 
+def process_image_access(image_path):
+    image = Image.open(image_path)
+    if image.mode == 'RGBA':
+        image = image.convert('RGB')
+    boxes, _ = mtcnn.detect(image)
+    if boxes is None or len(boxes) == 0:
+        raise RuntimeError("No face was detected in the photo.")
 
-def access_save(username, image):
-    #wait_time= 300
+    aligned_faces = mtcnn(image)
+    if aligned_faces is None or len(aligned_faces) == 0:
+        raise RuntimeError("No face was detected or aligned for embedding.")
 
+    embeddings = model(aligned_faces).detach().cpu().numpy()
+    return embeddings[0]
+
+
+def process_access_attempt(image_base64, db_connection):
     try:
-        user_dir = os.path.join(base_path, username)
-        login_image_path = os.path.join(user_dir, 'login_face.jpg')  # path of the login image
-        if not os.path.exists(user_dir):
-            return False, "User not registered."
-        header, encoded = image.split(",", 1)
-        image_bytes =   base64.b64decode(encoded)
+        header, encoded = image_base64.split(",", 1)
+        img_bytes = base64.b64decode(encoded)
+        temp_path = "/tmp/temp_access_face.jpg"
+        with open(temp_path, "wb") as f:
+            f.write(img_bytes)
 
-        with open(login_image_path,'wb') as f:
-            f.write(image_bytes)
-            return True, login_image_path
+        attempt_embedding = process_image_access(temp_path)
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+        if attempt_embedding is None:
+            return None, "Error: No face detected during login attempt."
+
+        return attempt_embedding, "Facial embedding successfully extracted."
+
+    except RuntimeError as re:
+        print(f"Error processing access image: {re}")
+        return None, f"Error processing access image: {re}"
     except Exception as e:
-        return False, f"Error: {str(e)}"
-
-
-    #take_photo_and_show(user_dir)   # function call
+        print(f"Ocurrió un error inesperado durante el procesamiento del intento de acceso: {e}")
+        return None, f"Ocurrió un error inesperado durante el procesamiento del intento de acceso: {e}"
 
 
 
-def compare_face(username, login_image_path, threshold=0.6):
-    user_dir = os.path.join(base_path, username)
-    registered_image_path = os.path.join(user_dir, 'registered_face.jpg')
-
-    if not os.path.exists(user_dir):
+def compare_face(username, attempt_embedding, db_connection, threshold=0.6):
+    user_document = db_connection.data.find_one({"username": username})
+    if not user_document:
         return False, "User is not registered."
-    if not os.path.exists(registered_image_path):
-        return False, "No registered image found."
 
-    # Process recorded image
-    registered_image = Image.open(registered_image_path)
-    if registered_image.mode == 'RGBA':
-        registered_image = registered_image.convert('RGB')
-    registered_boxes = mtcnn(registered_image)
-    if registered_boxes is None:
-        return False, "No face detected in registered image."
-    registered_embedding = model(registered_boxes).detach().cpu().numpy()[0]
+    registered_embedding_list = user_document.get("face_embedding")
 
-    # Process access image
-    login_image = Image.open(login_image_path)
-    if login_image.mode == 'RGBA':
-        login_image = login_image.convert('RGB')
-    login_boxes = mtcnn(login_image)
-    if login_boxes is None:
-        return False, "No face detected in login image."
-    login_embedding = model(login_boxes).detach().cpu().numpy()[0]
-
-    # Compare embeddings
-    distance = np.linalg.norm(registered_embedding - login_embedding)
+    if not registered_embedding_list:
+        return False, "No facial embedding was found for this user."
+    registered_embedding = np.array(registered_embedding_list)
+    distance = np.linalg.norm(registered_embedding - attempt_embedding)
     if distance < threshold:
         return True, "Access granted."
     else:
         return False, "Access denied. The faces do not match."
 
 
-
-''' This funtion will only be used in consola:
-
-def take_photo_and_show(user_dir):  #function to take a photo
-        cap = cv2.VideoCapture(0)  # open the default camera (0 is the index)
-        if not cap.isOpened():
-            print("THE CAMERA COULD NOT BE OPEN.")
-            return None
-
-        while True:  # Loop for Video Capture
-            ret, frame = cap.read()  # ?????
-            if not ret:
-                print("THE PHOTO COULD NOT BE TAKEN.")
-                break
-
-            cv2.imshow('Press "s" to take the photo or "q" to exit', frame)
-
-            # wait for the user to press 's' or 'q'
-            key = cv2.waitKey(1)
-            if key == ord('s'):
-                new_image_path = os.path.join(user_dir, 'login_face.jpg')  # path for the image
-                cv2.imwrite(new_image_path, frame)  # load image in the path
-                print("Photo saved as:", new_image_path)
-                break
-            elif key == ord('q'):
-                print("Departure canceled.")
-                break
-
-        cap.release()
-        cv2.destroyAllWindows()  # closed opencv window'''

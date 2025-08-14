@@ -23,6 +23,7 @@ opencv-python = "^4.11.0"
 numpy = "1.26.4"
 facenet_pytorch = "2.5.0"
 flask = "^3.1.1"
+pymongo = {extras = ["srv"], version = "^4.13.2"}
 
 
 [build-system]
@@ -32,3 +33,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 registers = "facial_recognition.registers:main"
 access = "facial_recognition.access:main"
+flask = "facial_recognition.app:app.run(debug=True)"

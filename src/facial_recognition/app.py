@@ -1,15 +1,18 @@
 from flask import Flask, request, jsonify
-import registers
-import access
-import cv2
-import base64
-import os
-import shutil
+from . import registers
+from . import access
 import numpy as np
 from PIL import Image
 import io
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 app= Flask(__name__)
+
+# Set up MongoDB connection
+client = MongoClient('mongodb+srv://FacialRecognition:160594@cluster0.vih7xha.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+db = client['FaciaBase']
+collection = db['data']
 
 @app.route('/')
 def index():
@@ -103,7 +106,7 @@ def check_username_endpoint():
     if not username:
         return jsonify({'available': False, 'message': "No username provided"}), 400
 
-    ok = registers.check_username(username)
+    ok = registers.check_username(username, db)
     if ok :
         return jsonify({"available": True, "message": "Username is available"}), 200
     else:
@@ -347,7 +350,7 @@ def register_page():
 
 
         # Call save image funtion
-        ok, result =  registers.save_data(image, username, id_card, name, lastname)
+        ok, result =  registers.save_data(image, username, id_card, name, lastname, db)
         if ok :
             return jsonify({"status": "ok", "message": result}), 200
 
@@ -365,13 +368,29 @@ def validate_user():
     if not username or not ssnn:
         return jsonify({"status": "error", "message": "Missing username or SSNN"}), 400
 
-    registred_ssnn = access.get_ssnn_registred(username)
+    registred_ssnn = access.get_ssnn_registred(username, db)
     if not registred_ssnn:
         return jsonify({"status": "error", "message": "User not found"}), 404
     if ssnn != registred_ssnn:
         return jsonify({"status": "error", "message": "SSNN does not match"}), 401
 
     return jsonify({"status": "ok", "message": "User and SSNN validated"}), 200
+
+@app.route('/validate_access', methods=['POST'])
+def validate_access():
+    data = request.get_json()
+    username = data.get('username')
+    ssnn = data.get('ssnn')
+    if not username or not ssnn:
+        return jsonify({"success": False, "message": "Please provide username and SSNN."}), 400
+
+    user = db['data'].find_one({"username": username})
+    if not user:
+        return jsonify({"success": False, "message": "User not found."}), 200
+    if user.get("id_card") != ssnn:
+        return jsonify({"success": False, "message": "SSNN does not match."}), 200
+
+    return jsonify({"success": True, "message": "User and SSNN validated."}), 200
 
 
 @app.route('/access', methods=['GET', 'POST'])
@@ -488,22 +507,23 @@ def access_page():
                 alert("SSNN must contain only numbers.");
                 return;
             }
-            fetch('/validate_user', {
+
+            // Validar usuario y SSNN antes de abrir la cámara
+            fetch('/validate_access', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({username: username, ssnn: ssnn})
             })
             .then(response => response.json())
             .then(data => {
-                if (data.status === "ok") {
+                if (data.success) {
                     startCamera();
                 } else {
                     alert(data.message);
                 }
             })
-            .catch(err => alert('Error: ' + err));
-
-}
+            .catch(err => alert('Error validating access: ' + err));
+        }
 
         let streamActive = false;
         function startCamera() {
@@ -552,10 +572,11 @@ def access_page():
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
-            }).then(response => response.json())
-            .then(data => {
+            })
+            .then(async response => {
+                const data = await response.json();
                 alert(data.message);
-                if (data.status === "ok") {
+                if (data.success === true) {
                     window.location.href = "/documents";
                 }
             })
@@ -565,40 +586,39 @@ def access_page():
         </body>
         </html>
             '''
-
     elif request.method == 'POST':
-
         data = request.get_json()
         username = data.get('username')
         ssnn = data.get('ssnn')
         image_b64 = data.get('image')
 
-        required = [username, ssnn, image_b64]
-        if not all(required):
-            return jsonify({"status": "error", "message": "Missing data in the form"}), 400
+        if not username or not ssnn or not image_b64:
+            return jsonify({"success": False, "message": "Incomplete data provided."}), 400
 
-        resgistred_ssnn = access.get_ssnn_registred(username)
-        if not resgistred_ssnn:
-            return jsonify({"status": "error", "message": "User not found"}), 404
-        if ssnn != resgistred_ssnn:
-            return jsonify({"status": "error", "message": "SSNN does not match"}), 401
+        try:
+            registred_ssnn = access.get_ssnn_registred(username, db)
+            if not registred_ssnn:
+                return jsonify({"success": False, "message": "User not found."}), 200
 
+            if ssnn != registred_ssnn:
+                return jsonify({"success": False, "message": "SSNN does not match."}), 401
 
-        ok, result= access.access_save(username, image_b64)
-        if not ok:
-            return jsonify({"status": "error", "message": result}), 400
+            attempt_embedding, msg = access.process_access_attempt(image_b64, db)
+            if attempt_embedding is None:
+                return jsonify({"success": False, "message": msg}), 400
 
-        success, message = access.compare_face(username, result)
-        if success:
-            return jsonify({"status": "ok", "message": message}), 200
-        else:
-            return jsonify({"status": "error", "message": message}), 401
+            access_granted, msg = access.compare_face(username, attempt_embedding, db)
 
+            if access_granted:
+                return jsonify({"success": True, "message": msg}), 200
+            else:
+                return jsonify({"success": False, "message": msg}), 401 # Unauthorized
 
+        except Exception as e:
+            print(f"Error during access process: {e}")
+            return jsonify({"success": False, "message": f"Internal server error during access: {e}"}), 500
 
-
-
-
+        return jsonify({"success": False, "message": "Invalid request."}), 400
 
 @app.route('/documents')
 def documents_page():
