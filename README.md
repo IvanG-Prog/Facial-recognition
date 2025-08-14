@@ -37,3 +37,17 @@ This will start the Flask development server, and you can access the application
 ```shell
 poetry run pylint --recursive=y .
 ```
+
+
+---
+title: Facial Recognition
+emoji: 🌖
+colorFrom: blue
+colorTo: pink
+sdk: docker
+pinned: false
+license: mit
+short_description: 'facial recognition system '
+---
+
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference

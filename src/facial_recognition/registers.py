@@ -9,7 +9,7 @@ import base64
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from PIL import Image
-
+import os
 
 import numpy as np
 
@@ -25,8 +25,9 @@ current_file_path = os.path.abspath(__file__)
  # Go up three directories: facial_recognition → src → project root
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
 
-# Path to the new folder at the project root level
-base_path = os.path.join(project_root, 'register_faces')
+base_path = '/app/register_faces'
+os.makedirs(base_path, exist_ok=True)
+
 
 def check_username(username):
     user_dir = os.path.join(base_path,username)

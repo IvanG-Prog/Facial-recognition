@@ -8,8 +8,15 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+ENV HOME=/app
+ENV PYTHONPATH="${PYTHONPATH}:/app/src"
+ENV TORCH_HOME=/app/.cache
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+RUN useradd -m appuser && chown -R appuser /app
+USER appuser
 
 COPY . .
 
