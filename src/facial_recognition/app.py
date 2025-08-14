@@ -1,3 +1,7 @@
+"""
+This module is a Flask application that provides a web interface for facial recognition
+registration and access control.
+"""
 from flask import Flask, request, jsonify
 from . import registers
 from . import access
@@ -6,6 +10,7 @@ from PIL import Image
 import io
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+
 
 app= Flask(__name__)
 
@@ -16,6 +21,9 @@ collection = db['data']
 
 @app.route('/')
 def index():
+    """
+    Render the main page with options to register or access.
+    """
     return '''
 <!DOCTYPE html>
 <html lang="en">
@@ -115,6 +123,9 @@ def check_username_endpoint():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register_page():
+    """
+    Render the registration page for new users.
+    """
     if request.method == 'GET':
         return r'''
         <!DOCTYPE html>
@@ -339,7 +350,7 @@ def register_page():
         </body>
         </html>
     '''
-    elif request.method == 'POST':
+    if request.method == 'POST':
 
         datos = request.get_json()
         name = datos.get('name')
@@ -351,6 +362,7 @@ def register_page():
 
         # Call save image funtion
         ok, result =  registers.save_data(image, username, id_card, name, lastname, db)
+
         if ok :
             return jsonify({"status": "ok", "message": result}), 200
 
@@ -395,6 +407,9 @@ def validate_access():
 
 @app.route('/access', methods=['GET', 'POST'])
 def access_page():
+    """
+    Render the access page for users to authenticate using facial recognition.
+    """
     if request.method == 'GET':
         return r'''
         <!DOCTYPE html>
@@ -587,6 +602,7 @@ def access_page():
         </html>
             '''
     elif request.method == 'POST':
+
         data = request.get_json()
         username = data.get('username')
         ssnn = data.get('ssnn')
@@ -599,6 +615,7 @@ def access_page():
             registred_ssnn = access.get_ssnn_registred(username, db)
             if not registred_ssnn:
                 return jsonify({"success": False, "message": "User not found."}), 200
+
 
             if ssnn != registred_ssnn:
                 return jsonify({"success": False, "message": "SSNN does not match."}), 401
@@ -622,6 +639,9 @@ def access_page():
 
 @app.route('/documents')
 def documents_page():
+    """
+    Render the documents page for authenticated users.
+    """
     return '''
 <!DOCTYPE html>
 <html lang="en">

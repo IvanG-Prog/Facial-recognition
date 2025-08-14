@@ -1,3 +1,10 @@
+"""
+This module provides functions to register a new user with their personal data and photo.
+It includes functions to validate user data, save the user's photo,
+and process the photo to obtain face embeddings.
+"""
+import os
+import base64
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from PIL import Image
@@ -5,6 +12,8 @@ import os
 import numpy as np
 import base64
 from flask import jsonify
+
+
 
 device = torch.device('cpu')
 
@@ -33,6 +42,7 @@ def process_image_access(image_path):
     if aligned_faces is None or len(aligned_faces) == 0:
         raise RuntimeError("No face was detected or aligned for embedding.")
 
+
     embeddings = model(aligned_faces).detach().cpu().numpy()
     return embeddings[0]
 
@@ -44,6 +54,7 @@ def process_access_attempt(image_base64, db_connection):
         temp_path = "/tmp/temp_access_face.jpg"
         with open(temp_path, "wb") as f:
             f.write(img_bytes)
+
 
         attempt_embedding = process_image_access(temp_path)
         if os.path.exists(temp_path):
@@ -66,6 +77,7 @@ def process_access_attempt(image_base64, db_connection):
 def compare_face(username, attempt_embedding, db_connection, threshold=0.6):
     user_document = db_connection.data.find_one({"username": username})
     if not user_document:
+
         return False, "User is not registered."
 
     registered_embedding_list = user_document.get("face_embedding")
@@ -76,7 +88,3 @@ def compare_face(username, attempt_embedding, db_connection, threshold=0.6):
     distance = np.linalg.norm(registered_embedding - attempt_embedding)
     if distance < threshold:
         return True, "Access granted."
-    else:
-        return False, "Access denied. The faces do not match."
-
-
