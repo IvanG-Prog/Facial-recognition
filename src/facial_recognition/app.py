@@ -5,9 +5,18 @@ registration and access control.
 from flask import Flask, redirect, request, jsonify, send_from_directory, url_for
 import facial_recognition.registers as registers
 import facial_recognition.access as access
+import psutil
 import os
 
 app= Flask(__name__)
+
+
+
+
+process = psutil.Process(os.getpid())
+print(f"Memory used: {process.memory_info().rss / (1024 * 1024):.2f} MB")
+
+# ...resto de tu código Flask...
 
 @app.route('/')
 def index():

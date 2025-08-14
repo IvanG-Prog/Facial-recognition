@@ -1,0 +1,11 @@
+Flask==3.1.0
+flask-cors==5.0.1
+gunicorn==23.0.0
+pillow==10.2.0
+opencv-python==4.11.0.86
+psutil==5.9.8
+torch==2.2.2
+deepface==0.0.93
+mtcnn==1.0.0
+retina-face==0.0.17
+numpy==2.1.3
