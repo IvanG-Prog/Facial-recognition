@@ -2,7 +2,7 @@
 This module is a Flask application that provides a web interface for facial recognition
 registration and access control.
 """
-from flask import Flask, redirect, request, jsonify, send_from_directory, url_for
+from flask import Flask, request, jsonify
 import facial_recognition.registers as registers
 import facial_recognition.access as access
 import psutil
@@ -16,38 +16,6 @@ app= Flask(__name__)
 process = psutil.Process(os.getpid())
 print(f"Memory used: {process.memory_info().rss / (1024 * 1024):.2f} MB")
 
-# ...resto de tu código Flask...
-
-@app.route('/')
-def index():
-    """
-    Render the main page with options to register or access.
-    """
-    frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../facial-frontend'))
-    return send_from_directory(os.path.join(frontend_path), 'index.html')
-
-#-------------------------------------------------------
-@app.route('/assets/<path:filename>')
-def assets(filename):
-    frontend_assets = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../facial-frontend/assets'))
-    return send_from_directory(frontend_assets, filename)
-
-@app.route('/register.html')
-def register_html():
-    frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../facial-frontend'))
-    return send_from_directory(frontend_path, 'register.html')
-
-@app.route('/access.html')
-def access_html():
-    frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../facial-frontend'))
-    return send_from_directory(frontend_path, 'access.html')
-
-@app.route('/documents.html')
-def documents_html():
-    frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../facial-frontend'))
-    return send_from_directory(frontend_path, 'documents.html')
-
-#------------------------------------------------------
 
 
 @app.route('/check_username', methods=['POST'])
@@ -63,7 +31,6 @@ def check_username_endpoint():
     else:
        return jsonify({"available": False, "message": "Username already exists"}), 400
 
-#-------------------------------------------------------
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -97,7 +64,6 @@ def register_page():
             print("REGISTER ERROR:", result)
             return jsonify({"status": "error", "message": result}), 400
 
-#------------------------------------------------------------
 
 
 @app.route('/validate_user', methods=['POST'])
@@ -116,7 +82,6 @@ def validate_user():
 
     return jsonify({"status": "ok", "message": "User and SSNN validated"}), 200
 
-#------------------------------------------------------------
 
 
 @app.route('/access', methods=['GET', 'POST'])
@@ -125,12 +90,6 @@ def access_page():
     Render the access page for users to authenticate using facial recognition.
     """
     if request.method == 'GET':
-        return r'''
-
-            '''
-
-    if request.method == 'POST':
-
         data = request.get_json()
         username = data.get('username')
         ssnn = data.get('ssnn')
@@ -155,16 +114,6 @@ def access_page():
         if success:
             return jsonify({"status": "ok", "message": message}), 200
         return jsonify({"status": "error", "message": message}), 401
-
-#------------------------------------------------------------
-
-
-@app.route('/documents')
-def documents_page():
-    """
-    Render the documents page for authenticated users.
-    """
-    return redirect(url_for('documents_html'))
 
 
 
