@@ -38,13 +38,15 @@ function startCamera() {
     .then(function (stream) {
       video.srcObject = stream;
       streamActive = true;
-      document.getElementById('msg').innerText = "Press Enter to take the photo and access.";
+      document.getElementById('msg').innerText = "Press Enter or tap the button to take the photo and access.";
+      document.getElementById('take-photo-btn').style.display = 'block';
     })
     .catch(function (err) {
       alert('The camera could not be accessed: ' + err);
     });
 }
 
+// for desktop:  Enter
 document.addEventListener('keydown', function (event) {
   if (event.key === 'Enter') {
     if (streamActive) {
@@ -52,6 +54,13 @@ document.addEventListener('keydown', function (event) {
     }
   }
 });
+
+// for mobile:  Tap the button
+document.getElementById('take-photo-btn').onclick = function () {
+  if (streamActive) {
+    takePhotoAndAccess();
+  }
+};
 
 function takePhotoAndAccess() {
   const video = document.getElementById('video');

@@ -7,13 +7,14 @@ function startCamera() {
     .then(function (stream) {
       video.srcObject = stream;
       streamActive = true;
-      document.getElementById('msg').innerText = "Press Enter to take the photo and register.";
+      document.getElementById('msg').innerText = "Press Enter to take or tap the button to take the photo and register.";
+      document.getElementById('take-photo-btn').style.display = 'block';
     })
     .catch(function (err) {
       alert('The camera could not be accessed: ' + err);
     });
 }
-
+// for desktop:  Enter
 document.addEventListener('keydown', function (event) {
   if (event.key === 'Enter') {
     if (streamActive) {
@@ -22,6 +23,13 @@ document.addEventListener('keydown', function (event) {
     }
   }
 });
+// for mobile:  Tap the button
+document.getElementById('take-photo-btn').onclick = function () {
+  if (streamActive) {
+    takePhotoAndRecord();
+  }
+};
+
 
 function validateAndActivate() {
   const form = document.getElementById('registroForm');
