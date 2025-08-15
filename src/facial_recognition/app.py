@@ -5,10 +5,12 @@ registration and access control.
 from flask import Flask, request, jsonify
 import facial_recognition.registers as registers
 import facial_recognition.access as access
+from flask_cors import CORS
 import psutil
 import os
 
-app= Flask(__name__)
+app = Flask(__name__)
+CORS(app)
 
 
 

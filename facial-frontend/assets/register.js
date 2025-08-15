@@ -56,7 +56,7 @@ function validateAndActivate() {
     return;
   }
 
-  fetch('https://huggingface.co/spaces/IvanG-Prog/facial-recognition.hf.space/check_username', {
+  fetch('https://IvanG-Prog-facial-recognition.hf.space/check_username', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: username })
@@ -94,7 +94,7 @@ function register(imagenBase64) {
     username: form.username.value,
     image: imagenBase64
   };
-  fetch('https://huggingface.co/spaces/IvanG-Prog/facial-recognition.hf.space/register', {
+  fetch('https://IvanG-Prog-facial-recognition.hf.space/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos)
