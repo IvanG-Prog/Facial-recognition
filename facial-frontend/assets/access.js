@@ -13,7 +13,7 @@ function validateAndStartCamera() {
     alert("SSNN must contain only numbers.");
     return;
   }
-  fetch('https://huggingface.co/spaces/IvanG-Prog/facial-recognition/validate_user', {
+  fetch('https://huggingface.co/spaces/IvanG-Prog/facial-recognition.hf.space/validate_user', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: username, ssnn: ssnn })
@@ -73,7 +73,7 @@ function access(imageBase64) {
     ssnn: form.ssnn.value,
     image: imageBase64
   };
-  fetch('https://huggingface.co/spaces/IvanG-Prog/facial-recognition/access', {
+  fetch('https://huggingface.co/spaces/IvanG-Prog/facial-recognition.hf.space/access', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)

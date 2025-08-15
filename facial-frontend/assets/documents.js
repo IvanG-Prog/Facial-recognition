@@ -1,7 +1,7 @@
 // This script manages the document list and logout functionality.
 
 document.addEventListener('DOMContentLoaded', function () {
-  fetch('https://huggingface.co/spaces/IvanG-Prog/facial-recognition/documents')
+  fetch('https://huggingface.co/spaces/IvanG-Prog/facial-recognition.hf.space/documents')
     .then(response => response.json())
     .then(data => {
       // Handle the document data here

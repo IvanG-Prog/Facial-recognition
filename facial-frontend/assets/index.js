@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('register-btn').onclick = function () {
-    fetch('https://huggingface.co/spaces/IvanG-Prog/facial-recognition/api/check')
+    fetch('https://IvanG-Prog-facial-recognition.hf.space/check_username', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'test' }) // Cambia 'test' por el valor real si lo tienes
+    })
       .then(response => {
         if (response.ok) {
           window.location.href = 'register.html';
@@ -14,7 +18,11 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   };
   document.getElementById('access-btn').onclick = function () {
-    fetch('https://huggingface.co/spaces/IvanG-Prog/facial-recognition/api/check')
+    fetch('https://IvanG-Prog-facial-recognition.hf.space/check_username', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'test' }) // Cambia 'test' por el valor real si lo tienes
+    })
       .then(response => {
         if (response.ok) {
           window.location.href = 'access.html';
