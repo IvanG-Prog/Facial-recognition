@@ -86,12 +86,12 @@ def validate_user():
 
 
 
-@app.route('/access', methods=['GET', 'POST'])
+@app.route('/access', methods=['POST'])
 def access_page():
     """
-    Render the access page for users to authenticate using facial recognition.
+    Authenticate user using facial recognition.
     """
-    if request.method == 'GET':
+    try:
         data = request.get_json()
         username = data.get('username')
         ssnn = data.get('ssnn')
@@ -107,8 +107,7 @@ def access_page():
         if ssnn != resgistred_ssnn:
             return jsonify({"status": "error", "message": "SSNN does not match"}), 401
 
-
-        ok, result= access.access_save(username, image_b64)
+        ok, result = access.access_save(username, image_b64)
         if not ok:
             return jsonify({"status": "error", "message": result}), 400
 
@@ -116,6 +115,8 @@ def access_page():
         if success:
             return jsonify({"status": "ok", "message": message}), 200
         return jsonify({"status": "error", "message": message}), 401
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 
