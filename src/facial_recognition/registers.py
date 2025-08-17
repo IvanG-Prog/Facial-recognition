@@ -9,7 +9,7 @@ import base64
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from PIL import Image
-
+import os
 
 import numpy as np
 
@@ -25,8 +25,9 @@ current_file_path = os.path.abspath(__file__)
  # Go up three directories: facial_recognition → src → project root
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
 
-# Path to the new folder at the project root level
-base_path = os.path.join(project_root, 'register_faces')
+base_path = '/app/register_faces'
+os.makedirs(base_path, exist_ok=True)
+
 
 def check_username(username):
     user_dir = os.path.join(base_path,username)
@@ -58,7 +59,7 @@ def save_data(image, username, identity_card, first_names, last_name):
     and saves the user data and photo.
     """
 
-    if not valid_name_lastname(first_names):
+    '''if not valid_name_lastname(first_names):
         return False, "invalid name"
 
     if not valid_name_lastname(last_name):
@@ -68,7 +69,7 @@ def save_data(image, username, identity_card, first_names, last_name):
         return False, "Invalid identity card"
 
     if not valid_username(username):
-        return False, "Invalid username"
+        return False, "Invalid username"'''
 
     # Decode the base64 image
     try:
@@ -119,3 +120,5 @@ def process_image(image_path):
     # passes the face images through the FaceNet model to obtain a feature vector
     embeddings = model(boxes).detach().cpu().numpy()
     return embeddings
+
+

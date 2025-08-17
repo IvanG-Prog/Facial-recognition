@@ -23,6 +23,9 @@ opencv-python = "^4.11.0"
 numpy = "1.26.4"
 facenet_pytorch = "2.5.0"
 flask = "^3.1.1"
+gunicorn = "^23.0.0"
+psutil = "^7.0.0"
+flask-cors = "^6.0.1"
 
 
 [build-system]
