@@ -1,6 +1,8 @@
 # Facial Recognition Security System
 [![Product Page](https://img.shields.io/badge/OFFICIAL_SITE-GET_CLI_HERE-3B82F6?style=for-the-badge)](https://recognitionf.netlify.app/)
 
+![biometric access with facial recognition](docs/biometric access with facial recognition)
+
 This project implements a web-based **Access Control System** that verifies user identity using **Facial Recognition** powered by Machine Learning. It consists of a robust Python API (Flask) for AI processing and a decoupled JavaScript frontend.
 
 ---
